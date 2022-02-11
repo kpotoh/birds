@@ -1,0 +1,10 @@
+data/*
+!data/external
+data/external/*
+!data/external/raw
+!data/raw
+data/raw/*
+!data/raw/final_birds_list_with_no_mistakes.csv.xz
+
+*.ipynb_checkpoints
+*__pycache__
