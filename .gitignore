@@ -4,7 +4,7 @@ data/external/*
 !data/external/raw
 !data/raw
 data/raw/*
-!data/raw/final_birds_list_with_no_mistakes.csv.xz
+!data/raw/final_birds_list_with_no_mistakes.tar.xz
 
 *.ipynb_checkpoints
 *__pycache__
