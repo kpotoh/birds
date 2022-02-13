@@ -3,7 +3,7 @@
 ## Environment
 - python 3.8+
 - iqtree
-- MACSE
+- [MACSE](https://bioweb.supagro.inra.fr/macse/)
 - ...
 
 Activate python venv
@@ -39,3 +39,8 @@ pip install -r requirements.txt
 └── src
     └── prepare_constrain_tree.py
 ```
+
+## References
+1. [R. Kimball (2019)](https://www.mdpi.com/1424-2818/11/7/109#supplementary) - constraint tree based on orders
+2. [V. Burskaia (2021)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8271140/) - tree building procedure
+3. [Birds taxa](https://www.worldbirdnames.org/new/ioc-lists/master-list-2/) - like in Kimball's tree
