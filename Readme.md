@@ -43,4 +43,4 @@ pip install -r requirements.txt
 ## References
 1. [R. Kimball (2019)](https://www.mdpi.com/1424-2818/11/7/109#supplementary) - constraint tree based on orders
 2. [V. Burskaia (2021)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8271140/) - tree building procedure
-3. [Birds taxa](https://www.worldbirdnames.org/new/ioc-lists/master-list-2/) - like in Kimball's tree
+3. [Birds taxa](https://www.worldbirdnames.org/new/ioc-lists/master-list-2/) - most close to Kimball's taxa (v10.1)
