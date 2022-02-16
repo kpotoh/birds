@@ -24,7 +24,12 @@ python3 scripts/prepare_fasta_to_aln.py
 ```
 bash scripts/align_genes.sh data/interim/gene_seqs/*
 ```
-1.3 Merge alignments of each gene to one fasta and remember positions of the genes (it will be used in 3rd step)
+1.3 Trim alignments
+```
+
+```
+
+1.4 Merge alignments of each gene to one fasta and remember positions of the genes (it will be used in 3rd step)
 ```
 TODO
 ```
