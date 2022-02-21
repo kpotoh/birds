@@ -6,31 +6,72 @@ TODO
 + write 12 files with nucleotides
 """
 import os
+import sys
+
+import click
 import pandas as pd
 
-PATH_TO_DATA = "./data/raw/final_birds_list_with_no_mistakes.csv"
-PATH_TO_OUT_DIR = "./data/interim/gene_seqs/"
+PATH_TO_DATA = "./data/interim/birds_genes.csv"
+PATH_TO_OUT_DIR = "./data/interim/birds_gene_seqs/"
+
+COLUMN_SP_NAME = "Species"
+COLUMN_GENE_NAME = "Gene"
+COLUMN_SEQ = "Sequence"
+
+STOPCODONS = {"TAA", "TAG", "AGA", "AGG"}
 
 
 def read_data(path: str) -> pd.DataFrame:
-    df = pd.read_csv(path, index_col=0).drop("X", axis=1)
-    seqs = df[["Species.name", "Gene.name", "Sequence"]]
-    seqs["Species.name"] = seqs["Species.name"].str.replace(" ", "_")
-    seqs = seqs.sort_values("Species.name")
-    seqs["Gene.name"] = seqs["Gene.name"].str.extract("\[(.+)\]")
-    seqs = seqs[seqs["Gene.name"] != "ND6"]
+    seqs = pd.read_csv(path)[[COLUMN_SP_NAME, COLUMN_GENE_NAME, COLUMN_SEQ]]
+    seqs[COLUMN_SP_NAME] = seqs[COLUMN_SP_NAME].str.replace(" ", "_")
+    seqs = seqs.sort_values(COLUMN_SP_NAME)
+    return seqs
+
+
+def drop_stopcodon(seq: str):
+    n = len(seq)
+    r = n % 3
+    if r == 0:
+        last_codon = seq[-3:]
+        if last_codon in STOPCODONS:
+            clean_seq = seq.rstrip(last_codon)
+        else:
+            clean_seq = seq  # TODO is this best action??? - YES
+            print(f"last codon '{last_codon}' is not stopcodon, but remainder = {r}", file=sys.stderr)
+    else:
+        stump = seq[-r:]
+        _is_part_of_stop = False
+        for codon in STOPCODONS:
+            if codon.startswith(stump):
+                _is_part_of_stop = True
+                break
+        if not _is_part_of_stop:
+            print(f"Stopcodon stump '{stump}' is not part of nt stopcodons", file=sys.stderr)
+
+        clean_seq = seq.rstrip(stump)
+    return clean_seq
+
+
+def filter_stopcodons(seqs: pd.DataFrame, inplace=False):
+    """
+    drop stop codons or stumps of its 
+    (mt genome is specific and can use poly-A tail for stop codons)
+    """
+    if not inplace:
+        seqs = seqs.copy()
+    seqs[COLUMN_SEQ] = seqs[COLUMN_SEQ].apply(drop_stopcodon)
     return seqs
 
 
 def file_write(data: pd.DataFrame, path_to_out: str):
-    genes = data["Gene.name"].unique()
+    genes = data[COLUMN_GENE_NAME].unique()
     assert os.path.exists(path_to_out), f"{path_to_out} doesn't exist"
-    fouts = [open(f"{path_to_out}{gn}.fasta", "w") for gn in genes]
+    fouts = [open(os.path.join(path_to_out, f"{gn}.fasta"), "w") for gn in genes]
 
     for i, gn in enumerate(genes):
-        cur_seqs = data[data["Gene.name"] == gn]
+        cur_seqs = data[data[COLUMN_GENE_NAME] == gn]
         cur_fout = fouts[i]
-        for sp_name, seq in cur_seqs[["Species.name", "Sequence"]].values:
+        for sp_name, seq in cur_seqs[[COLUMN_SP_NAME, COLUMN_SEQ]].values:
             cur_fout.write(f">{sp_name}\n")
             cur_fout.write(f"{seq}\n")
 
@@ -38,14 +79,18 @@ def file_write(data: pd.DataFrame, path_to_out: str):
         fout.close()
 
 
-def main():
-    seqs = read_data(PATH_TO_DATA)
-    assert all(seqs["Gene.name"] != "ND6"), "col Gene.name contains gene ND6"
+@click.command("preparator", help="Write fasta files for each gene")
+@click.option("--genes", required=True, 
+    help=f"path to csv file, containing gene sequences for each species, must contain 3 columns ({COLUMN_SP_NAME}, {COLUMN_SP_NAME}, {COLUMN_SEQ})")
+@click.option("--outdir", required=True, help="path to output directory, will rewrite its content")
+def main(genes: pd.DataFrame, outdir: str):
+    seqs = read_data(genes)
+    filter_stopcodons(seqs, inplace=True)
 
-    if not os.path.exists(PATH_TO_OUT_DIR):
-        os.mkdir(PATH_TO_OUT_DIR)
+    if not os.path.exists(outdir):
+        os.mkdir(outdir)
 
-    file_write(seqs, PATH_TO_OUT_DIR)
+    file_write(seqs, outdir)
 
 
 if __name__ == "__main__":

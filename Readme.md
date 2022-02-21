@@ -15,8 +15,11 @@ pip install -r requirements.txt
 
 ## Workflow
 ### 1 Prepare alignment 
-
-1.1 Extract fasta for each mitochondrial gene from raw table
+1.0 Extract genes for each bird from raw table
+```
+python3 scripts/extract_genes.py
+```
+1.1 Extract fasta for each mitochondrial gene from genes table
 ```
 python3 scripts/prepare_fasta_to_aln.py
 ```
