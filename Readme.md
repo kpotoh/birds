@@ -77,3 +77,4 @@ python3 scripts/prepare_constrain_tree.py
 3. [Birds taxa](https://www.worldbirdnames.org/new/ioc-lists/master-list-2/) - most close to Kimball's taxa (v10.1)
 4. [MACSE](https://bioweb.supagro.inra.fr/macse/index.php?menu=doc/dochtml) - tool for multiple alignment of coding sequences
 5. [Iqtree](http://www.iqtree.org/) - efficient software for phylogenomic inference
+6. [Genetic codes](https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?chapter=tgencodes#SG1)

@@ -7,18 +7,22 @@ TODO
 """
 import os
 import sys
+from functools import partial
 
 import click
 import pandas as pd
 
+from utils import read_start_stop_codons
+
 PATH_TO_DATA = "./data/interim/birds_genes.csv"
 PATH_TO_OUT_DIR = "./data/interim/birds_gene_seqs/"
+PATH_TO_GENCODE2 = "./data/external/genetic_code2.txt"
 
 COLUMN_SP_NAME = "Species"
 COLUMN_GENE_NAME = "Gene"
 COLUMN_SEQ = "Sequence"
 
-STOPCODONS = {"TAA", "TAG", "AGA", "AGG"}
+STARTCODONS, STOPCODONS = read_start_stop_codons(PATH_TO_GENCODE2)
 
 
 def read_data(path: str) -> pd.DataFrame:
@@ -28,12 +32,12 @@ def read_data(path: str) -> pd.DataFrame:
     return seqs
 
 
-def drop_stopcodon(seq: str):
+def drop_stopcodon(seq: str, stopcodons: set):
     n = len(seq)
     r = n % 3
     if r == 0:
         last_codon = seq[-3:]
-        if last_codon in STOPCODONS:
+        if last_codon in stopcodons:
             clean_seq = seq.rstrip(last_codon)
         else:
             clean_seq = seq  # TODO is this best action??? - YES
@@ -41,25 +45,29 @@ def drop_stopcodon(seq: str):
     else:
         stump = seq[-r:]
         _is_part_of_stop = False
-        for codon in STOPCODONS:
+        for codon in stopcodons:
             if codon.startswith(stump):
                 _is_part_of_stop = True
                 break
         if not _is_part_of_stop:
-            print(f"Stopcodon stump '{stump}' is not part of nt stopcodons", file=sys.stderr)
+            print(
+                f"Stopcodon stump '{stump}' is not part of nt stopcodons, start codon is {seq[:3]}", 
+                file=sys.stderr
+            )
 
         clean_seq = seq.rstrip(stump)
     return clean_seq
 
 
-def filter_stopcodons(seqs: pd.DataFrame, inplace=False):
+def filter_stopcodons(seqs: pd.DataFrame, stopcodons: set, inplace=False):
     """
     drop stop codons or stumps of its 
     (mt genome is specific and can use poly-A tail for stop codons)
     """
     if not inplace:
         seqs = seqs.copy()
-    seqs[COLUMN_SEQ] = seqs[COLUMN_SEQ].apply(drop_stopcodon)
+    seqs[COLUMN_SEQ] = seqs[COLUMN_SEQ].apply(
+        partial(drop_stopcodon, stopcodons=stopcodons))
     return seqs
 
 
@@ -83,9 +91,14 @@ def file_write(data: pd.DataFrame, path_to_out: str):
 @click.option("--genes", required=True, 
     help=f"path to csv file, containing gene sequences for each species, must contain 3 columns ({COLUMN_SP_NAME}, {COLUMN_SP_NAME}, {COLUMN_SEQ})")
 @click.option("--outdir", required=True, help="path to output directory, will rewrite its content")
-def main(genes: pd.DataFrame, outdir: str):
+@click.option("--gencode", required=False, default=PATH_TO_GENCODE2, 
+                           show_default=True, help="path to genetic code file")
+def main(genes: pd.DataFrame, outdir: str, gencode: str = None):
+    startcodons, stopcodons = read_start_stop_codons(gencode or PATH_TO_GENCODE2)
+    print(f"Used genetic code include\nStopcodons: {stopcodons}\nStartcodons: {startcodons}\n", file=sys.stderr)
+
     seqs = read_data(genes)
-    filter_stopcodons(seqs, inplace=True)
+    filter_stopcodons(seqs, stopcodons, inplace=True)
 
     if not os.path.exists(outdir):
         os.mkdir(outdir)
