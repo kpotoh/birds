@@ -2,9 +2,9 @@
 
 ## Environment
 - python 3.8+
-- iqtree
-- [MACSE](https://bioweb.supagro.inra.fr/macse/)
-- ...
+- MACSE V2.06
+- trimAl v1.4.rev22 build[2015-05-21] [docs](http://trimal.cgenomics.org/use_of_the_command_line_trimal_v1.2)
+- iqtree 2.1.3 [docs](http://www.iqtree.org/doc/iqtree-doc.pdf)
 
 Activate python venv
 ```
@@ -78,3 +78,4 @@ python3 scripts/prepare_constrain_tree.py
 4. [MACSE](https://bioweb.supagro.inra.fr/macse/index.php?menu=doc/dochtml) - tool for multiple alignment of coding sequences
 5. [Iqtree](http://www.iqtree.org/) - efficient software for phylogenomic inference
 6. [Genetic codes](https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi?chapter=tgencodes#SG1)
+7. [trimAl](http://trimal.cgenomics.org/introduction)

@@ -1,0 +1,26 @@
+(env_birds) kpotoh:~/birds$ python scripts/split_to_genes.py --genes data/interim/devilworm_genes.csv --outdir data/interim/geneseqs_devilworm --gencode data/external/genetic_code5.txt 
+Used genetic code include
+Stopcodons: {'TAA', 'TAG'}
+Startcodons: {'ATT', 'GTG', 'ATG', 'ATC', 'TTG', 'ATA'}
+
+Stopcodon stump 'A' is not part of nt stopcodons, start codon is ATT
+Stopcodon stump 'TG' is not part of nt stopcodons, start codon is GTT
+last codon 'GTA' is not stopcodon, but remainder = 0
+Stopcodon stump 'G' is not part of nt stopcodons, start codon is ATT
+Stopcodon stump 'TT' is not part of nt stopcodons, start codon is TTG
+last codon 'ATT' is not stopcodon, but remainder = 0
+last codon 'TAT' is not stopcodon, but remainder = 0
+
+
+(env_birds) kpotoh:~/birds$ python scripts/split_to_genes.py --genes data/interim/birds_genes.csv --outdir data/interim/geneseqs_birds --gencode data/external/genetic_code2.txt 
+Used genetic code include
+Stopcodons: {'AGA', 'TAG', 'AGG', 'TAA'}
+Startcodons: {'ATA', 'ATG', 'ATC', 'ATT', 'GTG'}
+
+Stopcodon stump 'AT' is not part of nt stopcodons, start codon is ATG
+last codon 'GGA' is not stopcodon, but remainder = 0
+Stopcodon stump 'TG' is not part of nt stopcodons, start codon is ATA
+last codon 'ATA' is not stopcodon, but remainder = 0
+last codon 'TCC' is not stopcodon, but remainder = 0
+last codon 'TCT' is not stopcodon, but remainder = 0
+last codon 'GGC' is not stopcodon, but remainder = 0
