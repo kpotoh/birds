@@ -56,6 +56,11 @@ for name in `cat data/interim/species.txt`; do echo -n -e "$name\t"; cat data/in
 bash scripts/qc_aln2.sh  # custom file, change in new run
 ```
 
+1.9 Repeat step 1.7 
+```
+for name in `cat data/interim/species.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_birds_clean/* | grep -c $name; done | cut -f 2 | sort | uniq
+```
+
 1.n ~~Merge alignments of each gene to one fasta and remember positions of the genes~~ (it will be used in 3rd step)
 ```
 TODO
