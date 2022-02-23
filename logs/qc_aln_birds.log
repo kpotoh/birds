@@ -1,0 +1,36 @@
+(env_birds) kpotoh:~/birds$ bash scripts/qc_aln.sh data/interim/alignments_birds/*.fna
+ATP8.fna
+ND1.fna
+!!! Frameshift detected !!!
+Lonchura_striata 
+
+!!! Frameshift detected !!!
+Tachybaptus_ruficollis 
+
+!!! Frameshift detected !!!
+Mergus_squamatus 
+
+ATP6.fna
+!!! Frameshift detected !!!
+Mergus_squamatus 
+
+ND3.fna
+!!! Frameshift detected !!!
+Mergus_squamatus 
+
+ND4L.fna
+ND2.fna
+!!! Frameshift detected !!!
+Mergus_squamatus 
+
+COX2.fna
+COX3.fna
+CYTB.fna
+ND4.fna
+COX1.fna
+ND5.fna
+!!! Frameshift detected !!!
+Numenius_phaeopus 
+
+!!! Frameshift detected !!!
+Amaurornis_akool 

@@ -19,20 +19,44 @@ pip install -r requirements.txt
 ```
 python3 scripts/extract_genes.py
 ```
+
 1.1 Extract fasta for each mitochondrial gene from genes table
 ```
 python3 scripts/prepare_fasta_to_aln.py
 ```
+
 1.2 Align the sequences in genes separately
 ```
-bash scripts/align_genes.sh data/interim/gene_seqs/*
-```
-1.3 Trim alignments
+bash scripts/align_genes.sh data/interim/gene_seqs/*  # need to modify to change gencode
 ```
 
+1.3 Check if all gaps divisible by 3. Run command from file below and look at last column - it must be all zero else there are some bugs in the alignment
+```
+bash scripts/count_gaps.sh  # before run change filenames
 ```
 
-1.4 Merge alignments of each gene to one fasta and remember positions of the genes (it will be used in 3rd step)
+1.4 Drop seqs that contains frameshifts and stopcodons in the middle of the genes
+```
+bash scripts/qc_aln.sh data/interim/alignments_birds/*.fna  # need to modify gencode before run
+```
+
+1.5 Trim alignments
+```
+bash scripts/trim_alignment.sh data/interim/alignments_birds/*.fna
+```
+1.6 Repeat step 1.3 if needed
+
+1.7 Check occurence of species in alignment
+```
+for name in `cat data/interim/species.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_birds/* | grep -c $name; done > logs/used_sp_in_aln.log
+```
+
+1.8 Drop *Mergus_squamatus* because it has only 8 genes after filtration
+```
+bash scripts/qc_aln2.sh  # custom file, change in new run
+```
+
+1.n ~~Merge alignments of each gene to one fasta and remember positions of the genes~~ (it will be used in 3rd step)
 ```
 TODO
 ```

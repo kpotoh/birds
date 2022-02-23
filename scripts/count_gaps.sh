@@ -1,5 +1,6 @@
-seq 100 | parallel printf {} ';' printf - ';' egrep -c "[ATGC]\-{$'{}'}[ATGC]" $@
+#!/bin/bash
 
-grep -o --- for --only-matching
+cat data/interim/alignments_birds/*.fna | egrep -o "\-*" | sort | uniq -c | awk '{print $1 "\t" length($2) "\t" $2 "\t" length($2)%3}' | tee logs/gaps_birds.log
 
-head data/interim/alignments_devilworm/ATP6.fna | egrep -o "[ATGC]\-{1,100}[ATGC]|^\-{1,200}[ATGC]|[ATGC]\-{1,100}$" | wc -l
+cat data/interim/alignments_devilworm/*.fna | egrep -o "\-*" | sort | uniq -c | awk '{print $1 "\t" length($2) "\t" $2 "\t" length($2)%3}' | tee logs/gaps_devilworm.log
+
