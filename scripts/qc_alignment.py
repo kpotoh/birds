@@ -1,4 +1,5 @@
 import os 
+import re
 from sys import stderr
 
 import click
@@ -52,6 +53,11 @@ def main(alignment, out_fasta, gencode, cutoff: float):
     seqs = SeqIO.parse(alignment, "fasta")
     clean_seqs = []
     for rec in seqs:
+        # delete non digit-letter characters in header
+        rec.id = re.sub("[^\w_]*", "", rec.id)
+        rec.name = re.sub("[^\w_]*", "", rec.name)
+        rec.description = ""
+
         seq = str(rec.seq).upper()
         n = len(seq)
         cons_end = int(n - n * cutoff)

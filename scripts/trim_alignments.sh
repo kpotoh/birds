@@ -4,8 +4,8 @@
 # FILE must be fasta with alignments with only Gene_name in record header
 
 # modify this for your custom data
-LABEL=birds
-GT=1  # 0.95
+LABEL=devilworm
+GT=0.95  # 0.95
 
 THREADS=12
 OUTDIR=data/interim/trimed_aln_$LABEL

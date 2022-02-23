@@ -42,17 +42,20 @@ bash scripts/qc_aln.sh data/interim/alignments_birds/*.fna  # need to modify gen
 
 1.5 Trim alignments
 ```
-bash scripts/trim_alignment.sh data/interim/alignments_birds/*.fna
+bash scripts/trim_alignment.sh data/interim/alignments_birds_clean/*.fna
 ```
+
 1.6 Repeat step 1.3 if needed
 
 1.7 Check occurence of species in alignment
 ```
 for name in `cat data/interim/species.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_birds/* | grep -c $name; done > logs/used_sp_in_aln.log
+for name in `cat data/interim/species_nematoda.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_devilworm/* | grep -c $name; done > logs/used_sp_in_aln_devilworm.log
 ```
 
 1.8 Drop *Mergus_squamatus* because it has only 8 genes after filtration
 ```
+egrep -v '1[012]' logs/used_sp_in_aln_devilworm.log
 bash scripts/qc_aln2.sh  # custom file, change in new run
 ```
 

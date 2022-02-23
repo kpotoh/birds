@@ -1,0 +1,96 @@
+(env_birds) kpotoh:~/birds$ bash scripts/qc_aln.sh data/interim/alignments_devilworm/*.fna
+CYTB.fna
+!!! Frameshift detected !!!
+Pseudoterranova_azarasi 
+
+ND4L.fna
+!!! Frameshift detected !!!
+Philometroides_sanguineus 
+
+!!! Frameshift detected !!!
+Thelazia_callipaeda 
+
+ND6.fna
+!!! Frameshift detected !!!
+Spirocerca_lupi 
+
+!!! Frameshift detected !!!
+Mecistocirrus_digitatus 
+
+ND2.fna
+COX2.fna
+!!! Frameshift detected !!!
+Passalurus_ambiguus 
+
+!!! Frameshift detected !!!
+Oxyuris_equi 
+
+ND3.fna
+!!! Frameshift detected !!!
+Thelazia_callipaeda 
+
+!!! Frameshift detected !!!
+Setaria_digitata 
+
+!!! Frameshift detected !!!
+Dictyocaulus_eckerti 
+
+ATP6.fna
+!!! Frameshift detected !!!
+Dictyocaulus_eckerti 
+
+!!! Frameshift detected !!!
+Passalurus_ambiguus 
+
+!!! Frameshift detected !!!
+Oxyuris_equi 
+
+ND1.fna
+!!! Frameshift detected !!!
+Dictyocaulus_eckerti 
+
+!!! Frameshift detected !!!
+Passalurus_ambiguus 
+
+!!! Frameshift detected !!!
+Heliconema_longissimum 
+
+COX3.fna
+!!! Frameshift detected !!!
+Angiostrongylus_vasorum 
+
+!!! Frameshift detected !!!
+Baylisascaris_transfuga 
+
+!!! Frameshift detected !!!
+Passalurus_ambiguus 
+
+!!! Frameshift detected !!!
+Oxyuris_equi 
+
+COX1.fna
+!!! Frameshift detected !!!
+Cylicodontophorus_bicoronatus 
+
+!!! Frameshift detected !!!
+Cylicostephanus_minutus 
+
+!!! Frameshift detected !!!
+Angiostrongylus_vasorum 
+
+ND4.fna
+!!! Frameshift detected !!!
+Pseudoterranova_azarasi 
+
+!!! Frameshift detected !!!
+Oxyuris_equi 
+
+!!! Frameshift detected !!!
+Passalurus_ambiguus 
+
+ND5.fna
+!!! Frameshift detected !!!
+Angiostrongylus_vasorum 
+
+!!! Frameshift detected !!!
+Pseudoterranova_decipiens_sensu_lato_Germany 
