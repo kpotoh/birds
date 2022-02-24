@@ -32,7 +32,7 @@ bash scripts/align_genes.sh data/interim/gene_seqs/*  # need to modify to change
 
 1.3 Check if all gaps divisible by 3. Run command from file below and look at last column - it must be all zero else there are some bugs in the alignment
 ```
-bash scripts/count_gaps.sh  # before run change filenames
+cat data/interim/alignments_birds/*.fna | egrep -o "\-*" | sort | uniq -c | awk '{print $1 "\t" length($2) "\t" $2 "\t" length($2)%3}' | tee logs/gaps_birds.log
 ```
 
 1.4 Drop seqs that contains frameshifts and stopcodons in the middle of the genes
@@ -76,6 +76,9 @@ python3 scripts/prepare_constrain_tree.py
 ```
 
 ### 3 Prepare nexus file TODO
+```
+cd data/interim/trimed_aln_devilworm_clean/ && ls | awk '{ gsub(".fna", "") ; print "charset", $1, "=", $1 ".fna: *;"}'
+```
  
 
 
