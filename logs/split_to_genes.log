@@ -12,6 +12,9 @@ last codon 'ATT' is not stopcodon, but remainder = 0
 last codon 'TAT' is not stopcodon, but remainder = 0
 
 
+
+
+
 (env_birds) kpotoh:~/birds$ python scripts/split_to_genes.py --genes data/interim/birds_genes.csv --outdir data/interim/geneseqs_birds --gencode data/external/genetic_code2.txt 
 Used genetic code include
 Stopcodons: {'AGA', 'TAG', 'AGG', 'TAA'}
