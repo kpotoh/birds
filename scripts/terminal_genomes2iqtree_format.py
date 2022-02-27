@@ -2,7 +2,6 @@ import os
 import re
 
 from Bio import SeqIO
-import numpy as np
 import pandas as pd
 import tqdm
 
@@ -58,6 +57,7 @@ def parse_alignment(files: list, scheme: dict) -> pd.DataFrame:
                     pos_data = {
                         "Node": node,
                         "Part": part,
+                        # "Gene": gene,
                         "Site": site + previous_part_len,
                         "State": state,
                     }
@@ -66,13 +66,13 @@ def parse_alignment(files: list, scheme: dict) -> pd.DataFrame:
 
                     data.append(pos_data)
 
-            previous_part_len = len(seq)
+            previous_part_len += len(seq)
 
     df = pd.DataFrame(data)
     return df
 
 
-def complete_unk_data(data: pd.DataFrame, aln_len: int):
+def complete_unk_data(data: pd.DataFrame, aln_len: int) -> pd.DataFrame:
     """
     add gaps to genes positions that not used in the alignment
     """
@@ -85,11 +85,11 @@ def complete_unk_data(data: pd.DataFrame, aln_len: int):
         some_node = data.Node.sample().values[0]
     full_genome_pos = set(map(
         tuple, data[data.Node == some_node][["Part", "Site"]].values))
-    
-    for _un_node in uncomplete_nodes:
+
+    for _un_node in tqdm.tqdm(uncomplete_nodes, "Completing nodes"):
         un_genome_pos = set(map(
             tuple, data[data.Node == _un_node][["Part", "Site"]].values))
-        
+
         gappy_pos = full_genome_pos.difference(un_genome_pos)
 
         appendix = []
@@ -104,13 +104,11 @@ def complete_unk_data(data: pd.DataFrame, aln_len: int):
                 cur_data[f"p_{nucl}"] = 0
 
             appendix.append(cur_data)
-        
+
         appendix_df = pd.DataFrame(appendix)
         data = pd.concat([data, appendix_df])
 
     return data
-
-
 
 
 def main():
@@ -120,15 +118,10 @@ def main():
     aln_len = calculate_alignment_length(scheme)
 
     data_full = complete_unk_data(aln_data, aln_len)
+    assert len(data_full) % aln_len == 0, "something wrong..."
 
-    # aln_data.to_csv(PATH_TO_OUT_STATES, sep="\t", index=None)
+    data_full.to_csv(PATH_TO_OUT_STATES, sep="\t", index=None)
 
 
 if __name__ == "__main__":
     main()
-
-
-
-
-error
-data[data.Node == some_node][["Part", "Site"]].apply(lambda x: f"{x.Part}_{x.Site}", axis=1).value_counts()

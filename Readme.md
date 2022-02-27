@@ -81,7 +81,8 @@ cd data/interim/trimed_aln_devilworm_clean/ && ls | awk '{ gsub(".fna", "") ; pr
 ```
  
 
-
+## Devilworm name
+- *Halicephalobus mephisto*
 
 
 ## Project structure

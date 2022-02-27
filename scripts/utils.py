@@ -1,8 +1,23 @@
-from typing import List, Tuple, Set
 import re
+from collections import defaultdict
+from typing import List, Set, Tuple
+
+from Bio.Data import CodonTable
+from Bio.Data.CodonTable import NCBICodonTableDNA
 
 PATH_TO_GENCODE5 = "data/external/genetic_code5.txt"
 
+
+possible_sbs = {
+    'A>C', 'A>G', 'A>T',
+    'C>A', 'C>G', 'C>T',
+    'G>A', 'G>C', 'G>T',
+    'T>A', 'T>C', 'T>G'
+}
+
+# TODO replace by biopython codontable
+######################################
+######################################
 
 def read_gencode(path: str) -> List[Tuple[str]]:
     pattern = re.compile("([ACGT]{3})\s([A-Z\*])\s([A-Za-z]{3})\s(i?)")
@@ -24,6 +39,38 @@ def read_start_stop_codons(path: str) -> Tuple[Set[str]]:
         if code[1] == "*":
             stopcodons.add(code[0])
     return startcodons, stopcodons
+
+
+######################################
+######################################
+
+
+def extract_ff_codons(codontable: NCBICodonTableDNA):
+    aa2codons = defaultdict(set)
+    for codon, aa in codontable.forward_table.items():
+        aa2codons[aa].add(codon)
+
+    ff_codons = set()
+    for aa, codons in aa2codons.items():
+        if len(codons) >= 4:
+            interim_dct = defaultdict(set)
+            for codon in codons:
+                interim_dct[codon[:2]].add(codon)
+
+            for nn in interim_dct:
+                if len(interim_dct[nn]) == 4:
+                    ff_codons = ff_codons.union(interim_dct[nn])
+    return ff_codons
+
+
+def node_parent(node):
+    try:
+        return next(node.iter_ancestors())
+    except BaseException:
+        return None
+
+
+
 
 
 if __name__ == "__main__":
