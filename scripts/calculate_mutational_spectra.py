@@ -13,7 +13,6 @@ path_to_states = "./data/interim/iqtree_runs/drun1/anc.state"
 path_to_leaves = "./data/interim/leaves_states.tsv"
 
 path_to_mutations = "./data/processed/nematoda_mutations.csv"
-path_to_mutspec = "./data/processed/nematoda_mutspec.csv"
 
 
 codontable = CodonTable.unambiguous_dna_by_id[5]
@@ -112,7 +111,7 @@ def extract_mutations(g1: Iterable, g2: Iterable, nodename1: str, nodename2: str
     return mut
 
 
-def calculate_mutspec(mut: pd.DataFrame, nucl_freqs, label: str = "syn"):
+def calculate_mutspec(mut: pd.DataFrame, nucl_freqs, label: str):
     cols = ["Label", "Mut"]
     for c in cols:
         assert c in mut.columns, f"Column {c} is not in mut df"
@@ -150,7 +149,7 @@ def calculate_mutspec(mut: pd.DataFrame, nucl_freqs, label: str = "syn"):
     return mutspec
 
 
-def extract_mutspec_from_tree(states, tree):
+def extract_mutspec_from_tree(states, tree, label: str):
     nodes = set(states.Node)
     node2genome = precalc_node2genome(states)
 
@@ -190,7 +189,7 @@ def extract_mutspec_from_tree(states, tree):
 
             mutations.append(mut)
 
-            mutspec = calculate_mutspec(mut, nucl_freqs)
+            mutspec = calculate_mutspec(mut, nucl_freqs, label=label)
             mutspec["RefNode"] = parent_node.name
             mutspec["AltNode"] = cur_node.name
 
@@ -223,10 +222,14 @@ def main():
 
     states = pd.concat([anc, leaves]).sort_values(["Node", "Part", "Site"])
 
-    mutations, edge_mutspec = extract_mutspec_from_tree(states, tree)
-
+    mutations, _ = extract_mutspec_from_tree(states, tree, "syn")
     mutations.to_csv(path_to_mutations, index=None)
-    edge_mutspec.to_csv(path_to_mutspec, index=None)
+
+    path_to_mutspec = "./data/processed/nematoda_mutspec_{}.csv"
+    
+    for label in ["all", "syn", "ff"]:
+        _, edge_mutspec = extract_mutspec_from_tree(states, tree, label)
+        edge_mutspec.to_csv(path_to_mutspec.format(label), index=None)
 
 
 if __name__ == "__main__":
