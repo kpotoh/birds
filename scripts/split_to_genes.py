@@ -50,7 +50,7 @@ def drop_stopcodon(seq: str, stopcodons: set):
         if not _is_part_of_stop:
             print(
                 f"Stopcodon stump '{stump}' is not part of nt stopcodons, start codon is {seq[:3]}", 
-                file=sys.stderr
+                file=sys.stderr,
             )
 
         clean_seq = seq[:-r]

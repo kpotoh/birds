@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Union
 
 from Bio.Data import CodonTable
 from Bio.Data.CodonTable import NCBICodonTableDNA
@@ -45,7 +45,14 @@ def read_start_stop_codons(path: str) -> Tuple[Set[str]]:
 ######################################
 
 
-def extract_ff_codons(codontable: NCBICodonTableDNA):
+def extract_ff_codons(codontable: Union[NCBICodonTableDNA, int]):
+    if isinstance(codontable, NCBICodonTableDNA):
+        pass
+    elif isinstance(codontable, int):
+        codontable = CodonTable.unambiguous_dna_by_id[codontable]
+    else:
+        ValueError("passed codontable is not appropriate")
+
     aa2codons = defaultdict(set)
     for codon, aa in codontable.forward_table.items():
         aa2codons[aa].add(codon)

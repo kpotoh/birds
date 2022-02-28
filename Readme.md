@@ -22,7 +22,7 @@ python3 scripts/extract_genes.py
 
 1.1 Extract fasta for each mitochondrial gene from genes table
 ```
-python3 scripts/prepare_fasta_to_aln.py
+python3 scripts/split_to_genes.py
 ```
 
 1.2 Align the sequences in genes separately
