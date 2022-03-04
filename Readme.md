@@ -77,9 +77,22 @@ python3 scripts/prepare_constrain_tree.py
 
 ### 3 Prepare nexus file TODO
 ```
-cd data/interim/trimed_aln_devilworm_clean/ && ls | awk '{ gsub(".fna", "") ; print "charset", $1, "=", $1 ".fna: *;"}'
+cd data/interim/trimed_aln_birds_clean/  # optional
+grep -v -m 1 '>' *.fna | awk -F ':' '{ gsub(".fna", "") ; print "charset", $1, "=", $1 ".fna: 1-" length($2) ";"}'
 ```
+And manually add custom features
  
+### 4 Run IQTREE
+```
+# full model search + tree
+iqtree2 -p scheme_birds_max.nex -m MFP+MERGE -nt 8 --prefix phylo
+
+# Ancestral state reconstruction TODO
+iqtree2 -anc -nt 8 --prefix anc -p ... -s ...
+
+```
+
+
 
 ## Devilworm name
 - *Halicephalobus mephisto*
