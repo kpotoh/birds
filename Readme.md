@@ -90,6 +90,11 @@ iqtree2 -p scheme_birds_max.nex -m MFP+MERGE -nt 8 --prefix phylo
 # Ancestral state reconstruction TODO
 iqtree2 -anc -nt 8 --prefix anc -p ... -s ...
 
+
+# KG advise
+iqtree2 -s ../folder -m GTR+FO+R6+I -asr -nt AUTO --prefix anc
+
+
 ```
 
 
