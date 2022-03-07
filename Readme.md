@@ -86,7 +86,7 @@ python3 scripts/prepare_constrain_tree.py
 
 2.5 Check 'NNN' nodes in the tree
 ```
-grep 
+grep NNN data/interim/constraint.tre
 ```
 
 ### 3 Prepare nexus file
