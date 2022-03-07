@@ -10,6 +10,8 @@ data/raw/*
 !data/interim
 data/interim/*
 !data/interim/taxonomy*
+!data/interim/*.tre
+!data/interim/species_birds*.txt
 
 
 *.ipynb_checkpoints

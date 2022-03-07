@@ -24,8 +24,8 @@ def main():
 
     taxa_df = pd.DataFrame(species)
     taxa_df["TAXON"] = taxa_df.TAXON.str.capitalize()
-    taxa_df["ORDER"] = taxa_df.ORDER.str.lstrip("ORDER ").str.capitalize()
-    taxa_df["Family"] = taxa_df.Family.str.lstrip("Family ")
+    taxa_df["ORDER"] = taxa_df.ORDER.str.removeprefix("ORDER ").str.capitalize()
+    taxa_df["Family"] = taxa_df.Family.str.removeprefix("Family ")
     taxa_df.columns = taxa_df.columns.str.capitalize()
 
     taxa_df.to_csv(PATH_TO_OUT, index=None)

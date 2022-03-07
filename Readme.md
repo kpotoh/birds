@@ -58,24 +58,38 @@ for name in `cat data/interim/species_nematoda.txt`; do echo -n -e "$name\t"; ca
 egrep -v '1[012]' logs/used_sp_in_aln_devilworm.log
 bash scripts/qc_aln2.sh  # custom file, change in new run
 ```
+Also drop *Agapornis_pullarius* because it is full dublicate of another *Agapornis* according to sequences
+
 
 1.9 Repeat step 1.7 
 ```
 for name in `cat data/interim/species.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_birds_clean/* | grep -c $name; done | cut -f 2 | sort | uniq
 ```
 
-1.n ~~Merge alignments of each gene to one fasta and remember positions of the genes~~ (it will be used in 3rd step)
+### 2 Prepare constraint tree
+2.1 Manually create orders tree [orders.tre](data/interim/orders.tre). We used Kimball et al. tree from poster in sapplements [1](#references).
+
+2.2 Prepare appropriate format of species taxonomy [taxonomy](data/interim/taxonomy-9.1.csv)
 ```
-TODO
+python scripts/get_taxonomy.py
 ```
 
-### 2 Prepare constraint tree
-2.1 **TODO** from [`orders.tre`](data/external/constraint/orders.tre) and species taxonomy [`bla-bla`](data/external/constraint/) **TODO**
+2.3 Write species from final alignment to file [species_birds_in_tree](data/interim/species_birds_in_tree.txt)
+```
+grep '>' data/interim/trimed_aln_birds_clean/ATP6.fna | sort | uniq | sed "s/>//" > data/interim/species_birds_in_tree.txt
+```
+
+2.4 Run script to produce [constraint tree](data/interim/constraint.tre)
 ```
 python3 scripts/prepare_constrain_tree.py
 ```
 
-### 3 Prepare nexus file TODO
+2.5 Check 'NNN' nodes in the tree
+```
+grep 
+```
+
+### 3 Prepare nexus file
 ```
 cd data/interim/trimed_aln_birds_clean/  # optional
 grep -v -m 1 '>' *.fna | awk -F ':' '{ gsub(".fna", "") ; print "charset", $1, "=", $1 ".fna: 1-" length($2) ";"}'
