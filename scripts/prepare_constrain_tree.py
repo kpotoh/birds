@@ -79,7 +79,7 @@ def add_species2tree(order_tree, order2species) -> str:
         if ordr in orders_from_data:
             species = order2species[ordr]
             sp_str = ",".join(species)
-            clade = "({})".format(sp_str)
+            clade = "({})".format(sp_str) if len(species) > 1 else sp_str
             order_tree = order_tree.replace(ordr, clade)
         else:
             order_tree = order_tree.replace(ordr, "NNNNN")
