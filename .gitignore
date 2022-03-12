@@ -19,4 +19,5 @@ data/interim/*
 *.ipynb_checkpoints
 *__pycache__
 env*
+evn*
 *.Rhistory
