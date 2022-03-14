@@ -11,11 +11,11 @@ data/raw/*
 data/interim/*
 !data/interim/taxonomy*
 !data/interim/*.tre
-!data/interim/species_birds*.txt
-!data/interim/scheme_birds*.nex
+!data/interim/species*.txt
+!data/interim/scheme_*.nex
 
 
-
+_data_mr
 *.ipynb_checkpoints
 *__pycache__
 env*

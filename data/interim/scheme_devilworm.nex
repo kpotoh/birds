@@ -1,0 +1,15 @@
+#nexus
+begin sets;
+    charset ATP6 = ATP6.fna: *;
+    charset COX1 = COX1.fna: *;
+    charset COX2 = COX2.fna: *;
+    charset COX3 = COX3.fna: *;
+    charset CYTB = CYTB.fna: *;
+    charset ND1 = ND1.fna: *;
+    charset ND2 = ND2.fna: *;
+    charset ND3 = ND3.fna: *;
+    charset ND4 = ND4.fna: *;
+    charset ND4L = ND4L.fna: *;
+    charset ND5 = ND5.fna: *;
+    charset ND6 = ND6.fna: *;
+end;
