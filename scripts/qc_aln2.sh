@@ -19,6 +19,8 @@
 LABEL=birds
 INDIR=data/interim/trimed_aln_$LABEL
 OUTDIR=data/interim/trimed_aln_${LABEL}_clean
+# INDIR=data/interim/alignments_birds_clean
+# OUTDIR=data/interim/alignments_birds_clean_clean
 mkdir -p $OUTDIR
 
 for file in $INDIR/*

@@ -39,6 +39,7 @@ cat data/interim/alignments_birds/*.fna | egrep -o "\-*" | sort | uniq -c | awk 
 ```
 bash scripts/qc_aln.sh data/interim/alignments_birds/*.fna  # need to modify gencode before run
 ```
+**TODO move step 1.7-8 here!!!!!!!!**
 
 1.5 Trim alignments
 ```
@@ -97,6 +98,8 @@ grep -v -m 1 '>' *.fna | awk -F ':' '{ gsub(".fna", "") ; print "charset", $1, "
 And manually add custom features
  
 ### 4 Run IQTREE
+Scripts presented [here](./scripts/server/)
+
 ```
 # full model search + tree
 iqtree2 -p scheme_birds_max.nex -m MFP+MERGE -nt 8 --prefix phylo
