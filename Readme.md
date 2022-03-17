@@ -1,5 +1,8 @@
 # Build bird tree
 
+## Devilworm name
+- *Halicephalobus mephisto*
+
 ## Environment
 - python 3.8+
 - MACSE V2.06
@@ -30,31 +33,31 @@ python3 scripts/split_to_genes.py
 bash scripts/align_genes.sh data/interim/gene_seqs/*  # need to modify to change gencode
 ```
 
-1.3 Check if all gaps divisible by 3. Run command from file below and look at last column - it must be all zero else there are some bugs in the alignment
+1.2* Check if all gaps divisible by 3. Run command from file below and look at last column - it must be all zero else there are some bugs in the alignment
 ```
 cat data/interim/alignments_birds/*.fna | egrep -o "\-*" | sort | uniq -c | awk '{print $1 "\t" length($2) "\t" $2 "\t" length($2)%3}' | tee logs/gaps_birds.log
 ```
 
-1.4 Drop seqs that contains frameshifts and stopcodons in the middle of the genes
+1.3 Drop seqs that contains frameshifts and stopcodons in the middle of the genes
 ```
 bash scripts/qc_aln.sh data/interim/alignments_birds/*.fna  # need to modify gencode before run
 ```
-**TODO move step 1.7-8 here!!!!!!!!**
+**TODO move step 1.5-6 here!!!!!!!!**
 
-1.5 Trim alignments
+1.4 Trim alignments
 ```
 bash scripts/trim_alignment.sh data/interim/alignments_birds_clean/*.fna
 ```
 
-1.6 Repeat step 1.3 if needed
+1.4* Repeat step 1.2* if needed
 
-1.7 Check occurence of species in alignment
+1.5* Check occurence of species in alignment
 ```
 for name in `cat data/interim/species.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_birds/* | grep -c $name; done > logs/used_sp_in_aln.log
 for name in `cat data/interim/species_nematoda.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_devilworm/* | grep -c $name; done > logs/used_sp_in_aln_devilworm.log
 ```
 
-1.8 Drop *Mergus_squamatus* because it has only 8 genes after filtration
+1.5 Drop *Mergus_squamatus* because it has only 8 genes after filtration
 ```
 egrep -v '1[012]' logs/used_sp_in_aln_devilworm.log
 bash scripts/qc_aln2.sh  # custom file, change in new run
@@ -62,7 +65,7 @@ bash scripts/qc_aln2.sh  # custom file, change in new run
 Also drop *Agapornis_pullarius* because it is full dublicate of another *Agapornis* according to sequences
 
 
-1.9 Repeat step 1.7 
+1.6* Repeat step 1.5*
 ```
 for name in `cat data/interim/species.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_birds_clean/* | grep -c $name; done | cut -f 2 | sort | uniq
 ```
@@ -82,7 +85,7 @@ grep '>' data/interim/trimed_aln_birds_clean/ATP6.fna | sort | uniq | sed "s/>//
 
 2.4 Run script to produce [constraint tree](data/interim/constraint.tre)
 ```
-python3 scripts/prepare_constrain_tree.py
+python3 scripts/prepare_constraint_tree.py
 ```
 
 2.5 Check 'NNN' nodes in the tree
@@ -126,7 +129,7 @@ WARNING: Too few replicates for AU test. At least -zb 10000 for reliable results
 
 Tree      logL    deltaL  bp-RELL    p-KH     p-SH       c-ELW       p-AU
 -------------------------------------------------------------------------
-  1 -2173193.997  1008.9       0 -      0 -      0 - 3.62e-233 - 2.78e-05 - 
+  1 -2173193.997  1008.9       0 -      0 -      0 - 3.62e-233 - 2.78e-05 -  # with constraint
   2 -2172185.053       0       1 +      1 +      1 +         1 +        1 + 
 
 deltaL  : logL difference from the maximal logl in the set.
@@ -141,10 +144,19 @@ Minus signs denote significant exclusion.
 All tests performed 1000 resamplings using the RELL method.
 
 ```
+### 6 Mutational spectra
+6.1 Prepare appropriate format of leaves states
+```
+
+```
 
 
-## Devilworm name
-- *Halicephalobus mephisto*
+## Stuff
+
+### Count all genes length
+```
+parallel tail -n 1 {} ::: *.fna | paste -s -d '' | wc  # minus one
+```
 
 
 ## Project structure
