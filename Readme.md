@@ -107,13 +107,40 @@ iqtree2 -p scheme_birds_max.nex -m MFP+MERGE -nt 8 --prefix phylo
 # Ancestral state reconstruction TODO
 iqtree2 -anc -nt 8 --prefix anc -p ... -s ...
 
-
 # KG advise
 iqtree2 -s ../folder -m GTR+FO+R6+I -asr -nt AUTO --prefix anc
-
-
 ```
 
+### 5 Check constraint usefulness
+```
+cat phylo.treefile phylo_ex_constraint.treefile > both.tree
+iqtree2 -p phylo.best_model.nex -z both.tree -n 0 -zb 1000 -au -nt 12 --prefix topology
+
+
+USER TREES
+----------
+
+See topology.trees for trees with branch lengths.
+
+WARNING: Too few replicates for AU test. At least -zb 10000 for reliable results!
+
+Tree      logL    deltaL  bp-RELL    p-KH     p-SH       c-ELW       p-AU
+-------------------------------------------------------------------------
+  1 -2173193.997  1008.9       0 -      0 -      0 - 3.62e-233 - 2.78e-05 - 
+  2 -2172185.053       0       1 +      1 +      1 +         1 +        1 + 
+
+deltaL  : logL difference from the maximal logl in the set.
+bp-RELL : bootstrap proportion using RELL method (Kishino et al. 1990).
+p-KH    : p-value of one sided Kishino-Hasegawa test (1989).
+p-SH    : p-value of Shimodaira-Hasegawa test (2000).
+c-ELW   : Expected Likelihood Weight (Strimmer & Rambaut 2002).
+p-AU    : p-value of approximately unbiased (AU) test (Shimodaira, 2002).
+
+Plus signs denote the 95% confidence sets.
+Minus signs denote significant exclusion.
+All tests performed 1000 resamplings using the RELL method.
+
+```
 
 
 ## Devilworm name
