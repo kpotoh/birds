@@ -1,13 +1,13 @@
 #!/bin/bash
 #PBS -d .
-#PBS -l walltime=50:00:00,mem=20gb,ncpus=12
+#PBS -l walltime=40:00:00,mem=25gb,ncpus=16
 
 IQTREE=/home/kpotoh/tools/iqtree-2.1.3-Linux/bin/iqtree2
-THREADS=12
-PREFIX=anc_mf
+THREADS=16
+PREFIX=anc_mf2
 
 TREE=../phylo.treefile
-SCHEME=../scheme_birds_max.nex
+SCHEME=../scheme_birds_max_anc.nex
 
 cd ./birds/brun3/anc
 
