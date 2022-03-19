@@ -147,12 +147,13 @@ def main(aln_dir, scheme_path, out):
     print(scheme)
 
     tmp_aln_fp, aln_len = parse_alignment(aln_files, scheme, aln_dir, out_dir)
-    data_full = pd.read_csv(tmp_aln_fp, sep="\t")
+    
+    # data_full = pd.read_csv(tmp_aln_fp, sep="\t")
     # data_full = complete_unk_data(aln_data, aln_len)
-    assert len(data_full) % aln_len == 0, "something wrong..."
+    # assert len(data_full) % aln_len == 0, "something wrong..."
 
-    data_full.to_csv(out, sep="\t", index=None)
-    os.remove(tmp_aln_fp)
+    # data_full.to_csv(out, sep="\t", index=None)
+    # os.remove(tmp_aln_fp)
 
 
 if __name__ == "__main__":
