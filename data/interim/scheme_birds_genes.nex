@@ -1,15 +1,15 @@
 #nexus
 begin sets;
-    charset ATP6 = ATP6.fna: 1-681;
-    charset ATP8 = ATP8.fna: 1-162;
-    charset COX1 = COX1.fna: 1-1545;
-    charset COX2 = COX2.fna: 1-681;
-    charset COX3 = COX3.fna: 1-783;
-    charset CYTB = CYTB.fna: 1-1137;
-    charset ND1 = ND1.fna: 1-960;
-    charset ND2 = ND2.fna: 1-1038;
-    charset ND3 = ND3.fna: 1-348;
-    charset ND4 = ND4.fna: 1-1365;
-    charset ND4L = ND4L.fna: 1-294;
-    charset ND5 = ND5.fna: 1-1806;
+    charset ATP6 = ATP6.fna: *;
+    charset ATP8 = ATP8.fna: *;
+    charset COX1 = COX1.fna: *;
+    charset COX2 = COX2.fna: *;
+    charset COX3 = COX3.fna: *;
+    charset CYTB = CYTB.fna: *;
+    charset ND1 = ND1.fna: *;
+    charset ND2 = ND2.fna: *;
+    charset ND3 = ND3.fna: *;
+    charset ND4 = ND4.fna: *;
+    charset ND4L = ND4L.fna: *;
+    charset ND5 = ND5.fna: *;
 end;
