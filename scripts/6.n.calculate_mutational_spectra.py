@@ -8,11 +8,11 @@ from ete3 import PhyloTree
 
 from utils import extract_ff_codons, node_parent, possible_sbs
 
-path_to_tree = "./data/interim/iqtree_runs/drun1/anc.treefile"
-path_to_states = "./data/interim/iqtree_runs/drun1/anc.state"
-path_to_leaves = "./data/interim/leaves_states.tsv"
+path_to_tree =   "./data/interim/iqtree_runs/brun3/anc_kg.treefile"
+path_to_states = "./data/interim/anc_kg_states_birds.tsv"
+path_to_leaves = "./data/interim/leaves_birds_states.tsv"
 
-path_to_mutations = "./data/processed/nematoda_mutations.csv"
+path_to_mutations = "./data/processed/birds_mutations_kg.csv"
 
 
 codontable = CodonTable.unambiguous_dna_by_id[5]
@@ -225,7 +225,7 @@ def main():
     mutations, _ = extract_mutspec_from_tree(states, tree, "syn")
     mutations.to_csv(path_to_mutations, index=None)
 
-    path_to_mutspec = "./data/processed/nematoda_mutspec_{}.csv"
+    path_to_mutspec = "./data/processed/birds_mutspec_{}.csv"
     
     for label in ["all", "syn", "ff"]:
         _, edge_mutspec = extract_mutspec_from_tree(states, tree, label)

@@ -4,17 +4,17 @@ Only filenames need for this, but if there are preliminary aln concatenation it 
 
 Internal States must be rewritten to similar format 
 
+TODO rewrite input - only aln-files(!!!) BUT WE'll LOOSE THA PARTS INDEXES
+
 """
 
 import os
 import re
 import sys
-import tempfile
 from collections import defaultdict
 from typing import Dict, Tuple
 
 import click
-import pandas as pd
 import tqdm
 from Bio import SeqIO
 
@@ -46,17 +46,15 @@ def load_scheme(path: str) -> Dict[str, str]:
     return scheme
 
 
-def parse_alignment(files: list, scheme: dict, aln_dir, out_dir) -> Tuple[str, int]:
+def parse_alignment(files: list, scheme: dict, aln_dir, out) -> Tuple[str, int]:
     """
     read fasta files from scheme with alignments and write states to table
 
     return states table and full alignment length
     """
-    _, tmp_fp = tempfile.mkstemp(".tsv", "leaves_states_", dir=out_dir)
-    print(f"Temporary state table file - {tmp_fp}", file=sys.stderr)
-    tmp_handle = open(tmp_fp, "w")
+    handle = open(out, "w")
     columns = "Node Part Site State p_A p_C p_G p_T".split()
-    tmp_handle.write("\t".join(columns) + "\n")
+    handle.write("\t".join(columns) + "\n")
     aln_lens = []
     files = set(files)
     history = defaultdict(list)
@@ -74,7 +72,7 @@ def parse_alignment(files: list, scheme: dict, aln_dir, out_dir) -> Tuple[str, i
                     p = int(nucl == state)
                     pos_data.append(str(p))
 
-                tmp_handle.write("\t".join(pos_data) + "\n")
+                handle.write("\t".join(pos_data) + "\n")
         aln_lens.append(len(seq))
 
     _pass = False
@@ -87,53 +85,14 @@ def parse_alignment(files: list, scheme: dict, aln_dir, out_dir) -> Tuple[str, i
         else:
             unseen_parts = set(full_parts).difference(parts)
             for unp in unseen_parts:
+                print(f"Gap filling of part {unp} for node {node}...", file=sys.stderr)
                 for site in range(1, aln_lens[unp - 1] + 1):
-                    pos_data = [node, str(part), str(site), "-", "0", "0", "0", "0"]
-                    tmp_handle.write("\t".join(pos_data) + "\n")
+                    pos_data = [node, str(unp), str(site), "-", "0", "0", "0", "0"]
+                    handle.write("\t".join(pos_data) + "\n")
 
-    tmp_handle.close()
+    handle.close()
     full_aln_len = sum(aln_lens)
-    return tmp_fp, full_aln_len
-
-
-def _complete_unk_data(data: pd.DataFrame, aln_len: int) -> pd.DataFrame:
-    """
-    add gaps to genes positions that not used in the alignment
-
-    NOT EVERY GENE SEQUENCE FOR SPECIES PRESENTED IN ALN FILES. 
-    WE DROPED SOME GENES WITH LOW QUALITY
-
-    TODO rewrite to more optimal variant without reaing to memory
-    """
-    aln_sizes = data.groupby("Node").apply(len)
-    uncomplete_nodes = aln_sizes[aln_sizes != aln_len].index.values
-
-    some_node = uncomplete_nodes[0]
-    while some_node in uncomplete_nodes:
-        some_node = data.Node.sample().values[0]
-    full_genome_pos = set(
-        map(tuple, data[data.Node == some_node][["Part", "Site"]].values)
-    )
-    for _un_node in tqdm.tqdm(uncomplete_nodes, "Completing nodes"):
-        un_genome_pos = set(
-            map(tuple, data[data.Node == _un_node][["Part", "Site"]].values)
-        )
-        gappy_pos = full_genome_pos.difference(un_genome_pos)
-        appendix = []
-        for part, site in gappy_pos:
-            cur_data = {
-                "Node": _un_node,
-                "Part": part,
-                "Site": site,
-                "State": "-",
-            }
-            for nucl in "ACGT":
-                cur_data[f"p_{nucl}"] = 0
-            appendix.append(cur_data)
-
-        appendix_df = pd.DataFrame(appendix)
-        data = pd.concat([data, appendix_df])
-    return data
+    return full_aln_len
 
 
 @click.command("formatter", help="reformat alignment to states table")
@@ -141,20 +100,12 @@ def _complete_unk_data(data: pd.DataFrame, aln_len: int) -> pd.DataFrame:
 @click.option("--scheme", "scheme_path", required=True, type=click.Path(True), help="path to scheme that contain gene splitting info of alignment")
 @click.option("--out", required=True, type=click.Path(writable=True), help="path to output states file (tsv)")
 def main(aln_dir, scheme_path, out):
-    out_dir = os.path.dirname(out)
     aln_files = get_aln_files(aln_dir)
     scheme = load_scheme(scheme_path)
     print(scheme)
-
-    tmp_aln_fp, aln_len = parse_alignment(aln_files, scheme, aln_dir, out_dir)
-    
-    # data_full = pd.read_csv(tmp_aln_fp, sep="\t")
-    # data_full = complete_unk_data(aln_data, aln_len)
-    # assert len(data_full) % aln_len == 0, "something wrong..."
-
-    # data_full.to_csv(out, sep="\t", index=None)
-    # os.remove(tmp_aln_fp)
+    aln_len = parse_alignment(aln_files, scheme, aln_dir, out)
 
 
 if __name__ == "__main__":
     main()
+    # main("data/interim/alignments_birds_clean_clean", "data/interim/scheme_birds_genes.nex", "data/interim/leaves_birds_states.tsv")
