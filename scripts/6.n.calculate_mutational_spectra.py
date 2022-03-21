@@ -104,7 +104,7 @@ def extract_mutations(g1: Iterable, g2: Iterable, nodename1: str, nodename2: str
         Warning! 
         Ref - {nodename1}
         Alt - {nodename2}
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - {len(mutations)}""",
+        Number of mutations between ref and alt genomes are more than 10% {n * 0.1} of the genome length - {len(mutations)}""",
             file=sys.stderr
         )
     mut = pd.DataFrame(mutations)
@@ -119,7 +119,7 @@ def calculate_mutspec(mut: pd.DataFrame, nucl_freqs, label: str):
     labels = {"syn", "ff", "all"}
     if isinstance(label, str):
         label = label.lower()
-        if label.lower() not in labels:
+        if label not in labels:
             raise ValueError(f"pass the appropriate label: {labels}")
         if label == "syn":
             label = 1
