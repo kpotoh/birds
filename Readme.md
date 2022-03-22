@@ -145,6 +145,17 @@ All tests performed 1000 resamplings using the RELL method.
 
 ```
 ### 6 Mutational spectra
+
+Pseudocode for spectra extraction:
+```
+for codon in seq:
+  for nucl in seq:
+    context = ...
+    mut = ...
+    
+
+```
+
 6.1 Prepare appropriate format of leaves states
 ```
 
