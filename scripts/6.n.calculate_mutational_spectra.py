@@ -1,3 +1,4 @@
+from operator import index
 import os
 import sys
 from queue import Queue
@@ -14,12 +15,13 @@ from utils import extract_ff_codons, node_parent, possible_sbs
 class MutSpec:
     def __init__(
             self, 
-            path_to_tree, 
-            path_to_states, 
-            path_to_leaves, 
+            path_to_tree,
+            path_to_states,
+            path_to_leaves,
             out_dir,
             gcode=2,
         ):
+        self.MUT_LABELS = ["all", "syn", "ff"]
         self.gcode = gcode
         self.codontable = CodonTable.unambiguous_dna_by_id[gcode]
         self.ff_codons = extract_ff_codons(self.codontable)
@@ -31,16 +33,16 @@ class MutSpec:
         assert aln_sizes.nunique() == 1, "uncomplete state table"
 
         states = pd.concat([anc, leaves]).sort_values(["Node", "Part", "Site"])
-        mutations, _ = self.extract_mutspec_from_tree(states, tree, "syn")
-        
+        mutations, edge_mutspec = self.extract_mutspec_from_tree(states, tree)
+
         os.makedirs(out_dir)
         path_to_mutations = os.path.join(out_dir, "mutations.csv")
-        mutations.to_csv(path_to_mutations, index=None)
-
         path_to_mutspec = os.path.join(out_dir, "mutspec_{}.csv")
-        for label in ["all", "syn", "ff"]:
-            _, edge_mutspec = self.extract_mutspec_from_tree(states, tree, label)
-            edge_mutspec.to_csv(path_to_mutspec.format(label), index=None)
+        
+        mutations.to_csv(path_to_mutations, index=None)
+        for i, label in enumerate(self.MUT_LABELS):
+            fp = path_to_mutspec.format(label)
+            edge_mutspec[i].to_csv(fp, index=None)
 
     def is_four_fold(self, codon):
         return codon in self.ff_codons
@@ -74,7 +76,7 @@ class MutSpec:
     def extract_mutations(self, g1: np.ndarray, g2: np.ndarray, name1: str, name2: str, context=False):
         """
         TODO: work only with changed positions, not all
-        table -> indexes of mutated -> extended indexes with codons 
+        table -> indexes of mutated -> extended indexes with codons
 
         params:
         - g1 - reference genome (parent node)
@@ -83,7 +85,7 @@ class MutSpec:
         n, m = len(g1), len(g2)
         assert n == m, f"genomes lengths are not equal: {n} != {m}"
         assert n % 3 == 0, "genomes length must be divisible by 3 (codon structure)"
-
+        nucl_freqs = {x: 0 for x in "ACGT"}
         mutations = []
         for i in range(0, n - 2, 3):
             codon1 = g1[i: i + 3]
@@ -98,6 +100,10 @@ class MutSpec:
 
             for j in range(3):
                 nuc1, nuc2 = codon1[j], codon2[j]
+                # TODO count specific nucl_freq
+                # if j == 2 and self.is_four_fold(codon1_str):
+                #     nucl_freqs[nuc1] += 1
+
                 if nuc1 == nuc2:
                     continue
                 if label == 1 and j == 2:
@@ -167,7 +173,7 @@ class MutSpec:
         mutspec["MutSpec"] = mutspec["RawMutSpec"] / mutspec["RawMutSpec"].sum()
         return mutspec
 
-    def extract_mutspec_from_tree(self, states, tree, label: str):
+    def extract_mutspec_from_tree(self, states, tree):
         nodes = set(states.Node)
         node2genome = self.precalc_node2genome(states)
 
@@ -176,7 +182,7 @@ class MutSpec:
         Q = Queue()
         Q.put(tree)
 
-        edge_mutspec = []
+        edge_mutspec = [[] for _ in range(len(self.MUT_LABELS))]  # all, syn, ff
         mutations = []
         while not Q.empty():
             cur_node = Q.get()
@@ -209,15 +215,14 @@ class MutSpec:
 
                 mutations.append(mut)
 
-                mutspec = self.calculate_mutspec(mut, nucl_freqs, label=label)
-                mutspec["RefNode"] = parent_node.name
-                mutspec["AltNode"] = cur_node.name
-
-                edge_mutspec.append(mutspec)
-                # break
+                for i, label in enumerate(self.MUT_LABELS):
+                    mutspec = self.calculate_mutspec(mut, nucl_freqs, label=label)
+                    mutspec["RefNode"] = parent_node.name
+                    mutspec["AltNode"] = cur_node.name
+                    edge_mutspec[i].append(mutspec)
 
         mutations = pd.concat(mutations)
-        edge_mutspec = pd.concat(edge_mutspec)
+        edge_mutspec = list(map(pd.concat, edge_mutspec))
         return mutations, edge_mutspec
 
     @staticmethod
@@ -232,7 +237,7 @@ def main():
     path_to_tree =   "./data/interim/iqtree_runs/brun3/anc_kg.treefile"
     path_to_states = "./data/interim/anc_kg_states_birds.tsv"
     path_to_leaves = "./data/interim/leaves_birds_states.tsv"
-    out_dir = "./data/processed/birds0"
+    out_dir = "./data/processed/birds1"
     MutSpec(path_to_tree, path_to_states, path_to_leaves, out_dir)
 
 
