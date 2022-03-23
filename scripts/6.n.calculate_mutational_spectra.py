@@ -1,3 +1,4 @@
+from collections import defaultdict
 from operator import index
 import os
 import sys
@@ -9,7 +10,7 @@ import pandas as pd
 from Bio.Data import CodonTable
 from ete3 import PhyloTree
 
-from utils import extract_ff_codons, node_parent, possible_sbs
+from utils import extract_ff_codons, extract_syn_codons, node_parent, possible_sbs
 
 
 class MutSpec:
@@ -21,7 +22,7 @@ class MutSpec:
             out_dir,
             gcode=2,
         ):
-        self.MUT_LABELS = ["all", "syn", "ff"]
+        self.MUT_LABELS = ["all", "ff"]  # TODO add syn
         self.gcode = gcode
         self.codontable = CodonTable.unambiguous_dna_by_id[gcode]
         self.ff_codons = extract_ff_codons(self.codontable)
@@ -33,19 +34,26 @@ class MutSpec:
         assert aln_sizes.nunique() == 1, "uncomplete state table"
 
         states = pd.concat([anc, leaves]).sort_values(["Node", "Part", "Site"])
-        mutations, edge_mutspec = self.extract_mutspec_from_tree(states, tree)
+        mutations, edge_mutspec, total_nucl_freqs = self.extract_mutspec_from_tree(states, tree)
 
         os.makedirs(out_dir)
         path_to_mutations = os.path.join(out_dir, "mutations.csv")
         path_to_mutspec = os.path.join(out_dir, "mutspec_{}.csv")
+        path_to_nucl_freqs = os.path.join(out_dir, "nucl_freqs_{}.csv")
         
         mutations.to_csv(path_to_mutations, index=None)
-        for i, label in enumerate(self.MUT_LABELS):
-            fp = path_to_mutspec.format(label)
-            edge_mutspec[i].to_csv(fp, index=None)
+        for label in self.MUT_LABELS:
+            fp_mutspec = path_to_mutspec.format(label)
+            fp_nucl_freqs = path_to_nucl_freqs.format(label)
+            edge_mutspec[label].to_csv(fp_mutspec, index=None)
+            total_nucl_freqs[label].to_csv(fp_nucl_freqs, index=None)
 
     def is_four_fold(self, codon):
         return codon in self.ff_codons
+
+    def is_syn(self, codon, pos_in_codon):
+        raise NotImplementedError
+        # return pos_in_codon in self.syn_codons.get(codon)
 
     def get_mut_label(self, codon1: str, codon2: str):
         """
@@ -73,37 +81,58 @@ class MutSpec:
             node2genome[node] = gr.get_group(node).State
         return node2genome
 
-    def extract_mutations(self, g1: np.ndarray, g2: np.ndarray, name1: str, name2: str, context=False):
+    def extract_mutations(
+            self, 
+            g1: np.ndarray, g2: np.ndarray, 
+            name1: str, name2: str, 
+            collect_nucl_freqs=True, context=False,
+        ):
         """
-        TODO: work only with changed positions, not all
-        table -> indexes of mutated -> extended indexes with codons
+        Extract alterations of g2 comparing to g1
 
         params:
         - g1 - reference genome (parent node)
         - g2 - alternative genome (child node)
+        - name1 - node name of ref
+        - name2 - node name of alt
+        - collect_nucl_freqs - 
+        - context - TODO
+
+        return:
+        - mut - dataframe of mutations
+        - nucl_freqs - dict[lbl: dict[{ACGT}: int]] - nucleotide frequencies for all, syn and ff positions
         """
         n, m = len(g1), len(g2)
         assert n == m, f"genomes lengths are not equal: {n} != {m}"
         assert n % 3 == 0, "genomes length must be divisible by 3 (codon structure)"
-        nucl_freqs = {x: 0 for x in "ACGT"}
+        if collect_nucl_freqs:
+            nucl_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
         mutations = []
         for i in range(0, n - 2, 3):
             codon1 = g1[i: i + 3]
             codon2 = g2[i: i + 3]
+            codon1_str = "".join(codon1)
+            codon2_str = "".join(codon2)
+            
+            if collect_nucl_freqs:
+                for j in range(3):
+                    nuc1 = codon1[j]
+                    nucl_freqs["all"][nuc1] += 1
+                    if j == 2 and self.is_four_fold(codon1_str):
+                        nucl_freqs["ff"][nuc1] += 1
+                    # TODO count specific nucl_freqs for syn
+                    # if (j == 1 or j == 2)??? and ...:
+                    #     nucl_freqs["syn"][nuc1] += 1
+
             # one codon must contain only sbs and it cannot be indel
             if (codon1 == codon2).sum() != 2 or '-' in codon1 or '-' in codon2:
                 continue
 
-            codon1_str = "".join(codon1)
-            codon2_str = "".join(codon2)
             label, aa1, aa2 = self.get_mut_label(codon1_str, codon2_str)
 
+            # collect sbs
             for j in range(3):
                 nuc1, nuc2 = codon1[j], codon2[j]
-                # TODO count specific nucl_freq
-                # if j == 2 and self.is_four_fold(codon1_str):
-                #     nucl_freqs[nuc1] += 1
-
                 if nuc1 == nuc2:
                     continue
                 if label == 1 and j == 2:
@@ -127,14 +156,19 @@ class MutSpec:
         
         if len(mutations) > n * 0.1:
             print(f"""
-            Warning! 
+            Warning!
             Ref - {name1}
             Alt - {name2}
             Number of mutations between ref and alt genomes are more than 10% ({n * 0.1}) of the genome length - {len(mutations)}""",
                 file=sys.stderr
             )
         mut = pd.DataFrame(mutations)
-        return mut
+        if collect_nucl_freqs:
+            for lbl, nf in nucl_freqs.items():
+                nucl_freqs[lbl] = {_nucl: nf[_nucl] for _nucl in "ACGT"}
+            return mut, nucl_freqs
+        else:
+            return mut, None
 
     def calculate_mutspec(self, mut: pd.DataFrame, nucl_freqs, label: str):
         cols = ["Label", "Mut"]
@@ -182,8 +216,9 @@ class MutSpec:
         Q = Queue()
         Q.put(tree)
 
-        edge_mutspec = [[] for _ in range(len(self.MUT_LABELS))]  # all, syn, ff
+        edge_mutspec = defaultdict(list)  # all, syn, ff
         mutations = []
+        total_nucl_freqs = dict()
         while not Q.empty():
             cur_node = Q.get()
             for child in cur_node.children:
@@ -196,34 +231,40 @@ class MutSpec:
 
                 # main process starts here
                 parent_node = node_parent(cur_node)
-
                 parent_genome = node2genome[parent_node.name]
                 child_genome = node2genome[cur_node.name]
-
-                # TODO
-                # ERROR must be determined for all, syn, ff SEPARATELY!!!
-                nucl_freqs = parent_genome.value_counts().to_dict() 
-
-                mut = self.extract_mutations(
+                collect_nucl_freqs = ...
+                mut, custom_nucl_freqs = self.extract_mutations(
                     parent_genome.values,
                     child_genome.values,
                     parent_node.name,
                     cur_node.name,
+                    collect_nucl_freqs,
                 )
+                custom_nucl_freqs = custom_nucl_freqs or total_nucl_freqs[parent_node.name]
                 if len(mut) == 0:
                     continue
 
                 mutations.append(mut)
 
-                for i, label in enumerate(self.MUT_LABELS):
-                    mutspec = self.calculate_mutspec(mut, nucl_freqs, label=label)
+                cur_nucl_freqs = {"node": parent_node.name}
+                for i, lbl in enumerate(self.MUT_LABELS):
+                    if lbl == "syn":
+                        raise NotImplementedError
+                    mutspec = self.calculate_mutspec(mut, custom_nucl_freqs[lbl], label=lbl)
                     mutspec["RefNode"] = parent_node.name
                     mutspec["AltNode"] = cur_node.name
-                    edge_mutspec[i].append(mutspec)
+                    edge_mutspec[lbl].append(mutspec)
+                    for _nucl in "ACGT":
+                        cur_nucl_freqs[f"{_nucl}_{lbl}"] = custom_nucl_freqs[lbl][_nucl]
+
+                total_nucl_freqs[parent_node.name] = cur_nucl_freqs
 
         mutations = pd.concat(mutations)
-        edge_mutspec = list(map(pd.concat, edge_mutspec))
-        return mutations, edge_mutspec
+        total_nucl_freqs_df = pd.DataFrame(total_nucl_freqs)
+        # edge_mutspec = list(map(pd.concat, edge_mutspec))
+        edge_mutspec_df = {lbl: pd.concat(x) for lbl, x in edge_mutspec.items()}
+        return mutations, edge_mutspec_df, total_nucl_freqs_df
 
     @staticmethod
     def get_common_mutspec(edge_mutspec):

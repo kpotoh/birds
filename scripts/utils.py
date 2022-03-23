@@ -70,6 +70,16 @@ def extract_ff_codons(codontable: Union[NCBICodonTableDNA, int]):
     return ff_codons
 
 
+def extract_syn_codons(codontable: Union[NCBICodonTableDNA, int]):
+    """
+    extract codons containing mutation that are synonymous
+
+    return dict[codon: set[PosInCodon]] 
+    """
+
+    return 
+
+
 def node_parent(node):
     try:
         return next(node.iter_ancestors())
