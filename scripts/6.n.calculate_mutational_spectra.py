@@ -84,6 +84,65 @@ class MutSpec:
             node2genome[node] = gr.get_group(node).State
         return node2genome
 
+    def extract_mutspec_from_tree(self, states, tree):
+        nodes = set(states.Node)
+        node2genome = self.precalc_node2genome(states)
+
+        discovered_nodes = set()
+        discovered_nodes.add(tree.name)
+        Q = Queue()
+        Q.put(tree)
+
+        edge_mutspec = defaultdict(list)  # all, syn, ff
+        mutations = []
+        total_nucl_freqs = []  # dict()
+        while not Q.empty():
+            cur_node = Q.get()
+            for child in cur_node.children:
+                Q.put(child)
+
+            if cur_node.name not in discovered_nodes:
+                discovered_nodes.add(cur_node.name)
+                if cur_node.name not in nodes:
+                    continue
+
+                # main process starts here
+                parent_node = node_parent(cur_node)
+                parent_genome = node2genome[parent_node.name]
+                child_genome = node2genome[cur_node.name]
+                # collect_nucl_freqs = parent_node.name in total_nucl_freqs
+                mut, custom_nucl_freqs, codon_freqs = self.extract_mutations(
+                    parent_genome.values,
+                    child_genome.values,
+                    parent_node.name,
+                    cur_node.name,
+                    # collect_nucl_freqs,
+                )
+                # custom_nucl_freqs = custom_nucl_freqs or total_nucl_freqs[parent_node.name]
+                if len(mut) == 0:
+                    continue
+
+                mutations.append(mut)
+
+                cur_nucl_freqs = {"node": parent_node.name}
+                for lbl in self.MUT_LABELS:
+                    if lbl == "syn":
+                        raise NotImplementedError
+                    mutspec = self.calculate_mutspec(mut, custom_nucl_freqs[lbl], label=lbl)
+                    mutspec["RefNode"] = parent_node.name
+                    mutspec["AltNode"] = cur_node.name
+                    edge_mutspec[lbl].append(mutspec)
+                    for _nucl in "ACGT":
+                        cur_nucl_freqs[f"{_nucl}_{lbl}"] = custom_nucl_freqs[lbl][_nucl]
+
+                total_nucl_freqs.append(cur_nucl_freqs)
+
+        mutations = pd.concat(mutations)
+        total_nucl_freqs_df = pd.DataFrame(total_nucl_freqs).drop_duplicates()  # TODO rewrite to normal optimal decision
+        # edge_mutspec = list(map(pd.concat, edge_mutspec))
+        edge_mutspec_df = {lbl: pd.concat(x) for lbl, x in edge_mutspec.items()}
+        return mutations, edge_mutspec_df, total_nucl_freqs_df
+
     def extract_mutations(
             self, 
             g1: np.ndarray, g2: np.ndarray, 
@@ -118,6 +177,9 @@ class MutSpec:
             codon_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
         mutations = []
         for i in range(0, n - 2, 3):
+            # pass first and last positions due to context absence
+            if i == 0 or i == n - 1:
+                continue
             codon1 = g1[i: i + 3]
             codon2 = g2[i: i + 3]
             codon1_str = "".join(codon1)
@@ -140,7 +202,7 @@ class MutSpec:
                     # if (j == 1 or j == 2)??? and ...:
                     #     nucl_freqs["syn"][nuc1] += 1
 
-            # one codon must contain only sbs and it cannot be indel
+            # each codon must contain only sbs and it cannot be indel
             if (codon1 == codon2).sum() != 2 or '-' in codon1 or '-' in codon2:
                 continue
 
@@ -192,9 +254,9 @@ class MutSpec:
             for lbl in self.MUT_LABELS:
                 nucl_freqs[lbl] =  {_nucl:  nucl_freqs[lbl][_nucl]  for _nucl  in "ACGT"}
                 codon_freqs[lbl] = {_codon: nucl_freqs[lbl][_codon] for _codon in possible_codons}
-            return mut, nucl_freqs
+            return mut, nucl_freqs, codon_freqs
         else:
-            return mut, None
+            return mut, None, None
 
     def calculate_mutspec(self, mut: pd.DataFrame, nucl_freqs, label: str):
         cols = ["Label", "Mut"]
@@ -232,72 +294,6 @@ class MutSpec:
         mutspec["RawMutSpec"] = mutspec.ObsFr / mutspec.Divisor
         mutspec["MutSpec"] = mutspec["RawMutSpec"] / mutspec["RawMutSpec"].sum()
         return mutspec
-
-    def extract_mutspec_from_tree(self, states, tree):
-        nodes = set(states.Node)
-        node2genome = self.precalc_node2genome(states)
-
-        discovered_nodes = set()
-        discovered_nodes.add(tree.name)
-        Q = Queue()
-        Q.put(tree)
-
-        edge_mutspec = defaultdict(list)  # all, syn, ff
-        mutations = []
-        total_nucl_freqs = []  # dict()
-        while not Q.empty():
-            cur_node = Q.get()
-            for child in cur_node.children:
-                Q.put(child)
-
-            if cur_node.name not in discovered_nodes:
-                discovered_nodes.add(cur_node.name)
-                if cur_node.name not in nodes:
-                    continue
-
-                # main process starts here
-                parent_node = node_parent(cur_node)
-                parent_genome = node2genome[parent_node.name]
-                child_genome = node2genome[cur_node.name]
-                # collect_nucl_freqs = parent_node.name in total_nucl_freqs
-                mut, custom_nucl_freqs = self.extract_mutations(
-                    parent_genome.values,
-                    child_genome.values,
-                    parent_node.name,
-                    cur_node.name,
-                    # collect_nucl_freqs,
-                )
-                # custom_nucl_freqs = custom_nucl_freqs or total_nucl_freqs[parent_node.name]
-                if len(mut) == 0:
-                    continue
-
-                mutations.append(mut)
-
-                cur_nucl_freqs = {"node": parent_node.name}
-                for i, lbl in enumerate(self.MUT_LABELS):
-                    if lbl == "syn":
-                        raise NotImplementedError
-                    mutspec = self.calculate_mutspec(mut, custom_nucl_freqs[lbl], label=lbl)
-                    mutspec["RefNode"] = parent_node.name
-                    mutspec["AltNode"] = cur_node.name
-                    edge_mutspec[lbl].append(mutspec)
-                    for _nucl in "ACGT":
-                        cur_nucl_freqs[f"{_nucl}_{lbl}"] = custom_nucl_freqs[lbl][_nucl]
-
-                total_nucl_freqs.append(cur_nucl_freqs)
-
-        mutations = pd.concat(mutations)
-        total_nucl_freqs_df = pd.DataFrame(total_nucl_freqs).drop_duplicates()  # TODO rewrite to normal optimal decision
-        # edge_mutspec = list(map(pd.concat, edge_mutspec))
-        edge_mutspec_df = {lbl: pd.concat(x) for lbl, x in edge_mutspec.items()}
-        return mutations, edge_mutspec_df, total_nucl_freqs_df
-
-    @staticmethod
-    def get_common_mutspec(edge_mutspec):
-        common_mutspec = edge_mutspec.groupby("Mut")[["ObsFr", "RawMutSpec"]].sum()
-        common_mutspec["MutSpec"] = common_mutspec["RawMutSpec"] / \
-            common_mutspec["RawMutSpec"].sum()
-        return common_mutspec
 
 
 def main():
