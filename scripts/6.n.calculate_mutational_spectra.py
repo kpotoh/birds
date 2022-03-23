@@ -11,8 +11,10 @@ import pandas as pd
 from Bio.Data import CodonTable
 from ete3 import PhyloTree
 
-from utils import extract_ff_codons, extract_syn_codons, node_parent, possible_sbs
-
+from utils import (
+    extract_ff_codons, extract_syn_codons, node_parent, 
+    possible_sbs, possible_codons
+)
 
 class MutSpec:
     def __init__(
@@ -99,6 +101,11 @@ class MutSpec:
         - collect_nucl_freqs - 
         - context - TODO
 
+        conditions:
+        - in one codon could be only sbs
+        - in the context of one mutation couldn't be other sbs
+        - indels are not sbs and codons and contexts with sbs are not considered
+
         return:
         - mut - dataframe of mutations
         - nucl_freqs - dict[lbl: dict[{ACGT}: int]] - nucleotide frequencies for all, syn and ff positions
@@ -108,6 +115,7 @@ class MutSpec:
         assert n % 3 == 0, "genomes length must be divisible by 3 (codon structure)"
         if collect_nucl_freqs:
             nucl_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
+            codon_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
         mutations = []
         for i in range(0, n - 2, 3):
             codon1 = g1[i: i + 3]
@@ -118,9 +126,16 @@ class MutSpec:
             if collect_nucl_freqs:
                 for j in range(3):
                     nuc1 = codon1[j]
+                    up_nuc1 = g1[i + j - 1]
+                    down_nuc1 = g1[i + j + 1]
+                    context = f"{up_nuc1}{nuc1}{down_nuc1}"
+
                     nucl_freqs["all"][nuc1] += 1
+                    codon_freqs["all"][context] += 1
                     if j == 2 and self.is_four_fold(codon1_str):
                         nucl_freqs["ff"][nuc1] += 1
+                        codon_freqs["ff"][context] += 1
+
                     # TODO count specific nucl_freqs for syn
                     # if (j == 1 or j == 2)??? and ...:
                     #     nucl_freqs["syn"][nuc1] += 1
@@ -139,10 +154,19 @@ class MutSpec:
                 if label == 1 and j == 2:
                     label = 2 if self.is_four_fold(codon1_str) else label
 
+                up_nuc1 = g1[i + j - 1]
+                down_nuc1 = g1[i + j + 1]
+                up_nuc2 = g2[i + j - 1]
+                down_nuc2 = g2[i + j + 1]
+                if up_nuc1 != up_nuc2 or down_nuc1 != down_nuc2 or up_nuc1 == "-" or down_nuc1 == "-":
+                    continue
+
                 sbs = {
                     "RefNode": name1,
                     "AltNode": name2,
                     "Mut": f"{nuc1}>{nuc2}",
+                    "MutExt": f"{up_nuc1}[{nuc1}>{nuc2}]{down_nuc1}",
+                    "Context": f"{up_nuc1}{nuc1}{down_nuc1}",
                     "RefNucl": nuc1,
                     "AltNucl": nuc2,
                     "Label": label,
@@ -165,8 +189,9 @@ class MutSpec:
             )
         mut = pd.DataFrame(mutations)
         if collect_nucl_freqs:
-            for lbl, nf in nucl_freqs.items():
-                nucl_freqs[lbl] = {_nucl: nf[_nucl] for _nucl in "ACGT"}
+            for lbl in self.MUT_LABELS:
+                nucl_freqs[lbl] =  {_nucl:  nucl_freqs[lbl][_nucl]  for _nucl  in "ACGT"}
+                codon_freqs[lbl] = {_codon: nucl_freqs[lbl][_codon] for _codon in possible_codons}
             return mut, nucl_freqs
         else:
             return mut, None
