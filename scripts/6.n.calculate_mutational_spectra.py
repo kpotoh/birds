@@ -36,8 +36,13 @@ class MutSpec:
         aln_sizes = leaves.groupby("Node").apply(len)
         assert aln_sizes.nunique() == 1, "uncomplete state table"
 
+        # TODO drop states and global sorting
         states = pd.concat([anc, leaves]).sort_values(["Node", "Part", "Site"])
-        mutations, edge_mutspec, total_nucl_freqs = self.extract_mutspec_from_tree(states, tree)
+        
+        self.node2genome = self.precalc_node2genome(states)
+        self.nodes = set(states.Node)
+        
+        mutations, edge_mutspec, total_nucl_freqs = self.extract_mutspec_from_tree(tree)
 
         os.makedirs(out_dir)
         print(f"Output directory {out_dir} created", file=sys.stderr)
@@ -80,13 +85,16 @@ class MutSpec:
     def precalc_node2genome(self, states: pd.DataFrame) -> dict:
         node2genome = dict()
         gr = states.groupby("Node")
-        for node in states.Node.unique():
-            node2genome[node] = gr.get_group(node).State
+        nodes = states.Node.unique()
+        for node in nodes:
+            genome = gr.get_group(node).State
+            node2genome[node] = genome
         return node2genome
 
-    def extract_mutspec_from_tree(self, states, tree):
-        nodes = set(states.Node)
-        node2genome = self.precalc_node2genome(states)
+    def extract_mutspec_from_tree(self, tree):
+        # node2genome = self.precalc_node2genome(states)
+        nodes = self.nodes
+        node2genome = self.node2genome
 
         discovered_nodes = set()
         discovered_nodes.add(tree.name)
