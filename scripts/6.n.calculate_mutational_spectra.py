@@ -4,6 +4,7 @@ import os
 import sys
 from queue import Queue
 from typing import Iterable
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -37,16 +38,16 @@ class MutSpec:
         mutations, edge_mutspec, total_nucl_freqs = self.extract_mutspec_from_tree(states, tree)
 
         os.makedirs(out_dir)
+        print(f"Output directory {out_dir} created", file=sys.stderr)
         path_to_mutations = os.path.join(out_dir, "mutations.csv")
+        path_to_nucl_freqs = os.path.join(out_dir, "nucl_freqs.csv")
         path_to_mutspec = os.path.join(out_dir, "mutspec_{}.csv")
-        path_to_nucl_freqs = os.path.join(out_dir, "nucl_freqs_{}.csv")
         
         mutations.to_csv(path_to_mutations, index=None)
+        total_nucl_freqs.to_csv(path_to_nucl_freqs, index=None)
         for label in self.MUT_LABELS:
             fp_mutspec = path_to_mutspec.format(label)
-            fp_nucl_freqs = path_to_nucl_freqs.format(label)
             edge_mutspec[label].to_csv(fp_mutspec, index=None)
-            total_nucl_freqs[label].to_csv(fp_nucl_freqs, index=None)
 
     def is_four_fold(self, codon):
         return codon in self.ff_codons
@@ -218,7 +219,7 @@ class MutSpec:
 
         edge_mutspec = defaultdict(list)  # all, syn, ff
         mutations = []
-        total_nucl_freqs = dict()
+        total_nucl_freqs = []  # dict()
         while not Q.empty():
             cur_node = Q.get()
             for child in cur_node.children:
@@ -233,15 +234,15 @@ class MutSpec:
                 parent_node = node_parent(cur_node)
                 parent_genome = node2genome[parent_node.name]
                 child_genome = node2genome[cur_node.name]
-                collect_nucl_freqs = ...
+                # collect_nucl_freqs = parent_node.name in total_nucl_freqs
                 mut, custom_nucl_freqs = self.extract_mutations(
                     parent_genome.values,
                     child_genome.values,
                     parent_node.name,
                     cur_node.name,
-                    collect_nucl_freqs,
+                    # collect_nucl_freqs,
                 )
-                custom_nucl_freqs = custom_nucl_freqs or total_nucl_freqs[parent_node.name]
+                # custom_nucl_freqs = custom_nucl_freqs or total_nucl_freqs[parent_node.name]
                 if len(mut) == 0:
                     continue
 
@@ -258,10 +259,10 @@ class MutSpec:
                     for _nucl in "ACGT":
                         cur_nucl_freqs[f"{_nucl}_{lbl}"] = custom_nucl_freqs[lbl][_nucl]
 
-                total_nucl_freqs[parent_node.name] = cur_nucl_freqs
+                total_nucl_freqs.append(cur_nucl_freqs)
 
         mutations = pd.concat(mutations)
-        total_nucl_freqs_df = pd.DataFrame(total_nucl_freqs)
+        total_nucl_freqs_df = pd.DataFrame(total_nucl_freqs).drop_duplicates()  # TODO rewrite to normal optimal decision
         # edge_mutspec = list(map(pd.concat, edge_mutspec))
         edge_mutspec_df = {lbl: pd.concat(x) for lbl, x in edge_mutspec.items()}
         return mutations, edge_mutspec_df, total_nucl_freqs_df
@@ -278,7 +279,8 @@ def main():
     path_to_tree =   "./data/interim/iqtree_runs/brun3/anc_kg.treefile"
     path_to_states = "./data/interim/anc_kg_states_birds.tsv"
     path_to_leaves = "./data/interim/leaves_birds_states.tsv"
-    out_dir = "./data/processed/birds1"
+    out_dir = "./data/processed/birds"
+    out_dir = out_dir + "_" + datetime.now().strftime("%d-%m-%y-%H-%M-%S")
     MutSpec(path_to_tree, path_to_states, path_to_leaves, out_dir)
 
 

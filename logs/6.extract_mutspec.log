@@ -1,83 +1,22 @@
 (env_birds) kpotoh:~/birds$ /home/kpotoh/birds/env_birds/bin/python /home/kpotoh/birds/scripts/6.n.calculate_mutational_spectra.py
-(8629650, 8)
-(8652300, 8)
 
-        Warning! 
-        Ref - Node6
-        Alt - Dasyornis_broadbenti
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1166
+            Warning!
+            Ref - Node6
+            Alt - Dasyornis_broadbenti
+            Number of mutations between ref and alt genomes are more than 10% (1132.5) of the genome length - 1166
 
-        Warning! 
-        Ref - Node648
-        Alt - Heliornis_fulica
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1247
+            Warning!
+            Ref - Node648
+            Alt - Heliornis_fulica
+            Number of mutations between ref and alt genomes are more than 10% (1132.5) of the genome length - 1247
 
-        Warning! 
-        Ref - Node473
-        Alt - Pterocles_burchelli
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1153
+            Warning!
+            Ref - Node473
+            Alt - Pterocles_burchelli
+            Number of mutations between ref and alt genomes are more than 10% (1132.5) of the genome length - 1153
 
-        Warning! 
-        Ref - Node600
-        Alt - Turnix_velox
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1141
-
-        Warning! 
-        Ref - Node6
-        Alt - Dasyornis_broadbenti
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1166
-
-        Warning! 
-        Ref - Node648
-        Alt - Heliornis_fulica
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1247
-
-        Warning! 
-        Ref - Node473
-        Alt - Pterocles_burchelli
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1153
-
-        Warning! 
-        Ref - Node600
-        Alt - Turnix_velox
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1141
-
-        Warning! 
-        Ref - Node6
-        Alt - Dasyornis_broadbenti
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1166
-
-        Warning! 
-        Ref - Node648
-        Alt - Heliornis_fulica
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1247
-
-        Warning! 
-        Ref - Node473
-        Alt - Pterocles_burchelli
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1153
-
-        Warning! 
-        Ref - Node600
-        Alt - Turnix_velox
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1141
-
-        Warning! 
-        Ref - Node6
-        Alt - Dasyornis_broadbenti
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1166
-
-        Warning! 
-        Ref - Node648
-        Alt - Heliornis_fulica
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1247
-
-        Warning! 
-        Ref - Node473
-        Alt - Pterocles_burchelli
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1153
-
-        Warning! 
-        Ref - Node600
-        Alt - Turnix_velox
-        Number of mutations between ref and alt genomes are more than 10% of the genome length - 1141
+            Warning!
+            Ref - Node600
+            Alt - Turnix_velox
+            Number of mutations between ref and alt genomes are more than 10% (1132.5) of the genome length - 1141
+Output directory ./data/processed/birds_23-03-22-12-55-47 created
