@@ -191,6 +191,52 @@ parallel tail -n 1 {} ::: *.fna | paste -s -d '' | wc  # minus one
 └── src
     └── prepare_constrain_tree.py
 ```
+Last version:
+```
+.
+├── data
+│   ├── external
+│   │   ├── constraint
+│   │   ├── Input_for_iqtree
+│   │   └── raw
+│   ├── interim
+│   │   ├── alignments_birds
+│   │   ├── alignments_birds_clean
+│   │   ├── alignments_birds_clean_clean
+│   │   ├── alignments_devilworm
+│   │   ├── alignments_devilworm_clean
+│   │   ├── geneseqs_birds
+│   │   ├── geneseqs_devilworm
+│   │   ├── iqtree_runs
+│   │   │   ├── brun1
+│   │   │   ├── brun2_KG
+│   │   │   ├── _brun3
+│   │   │   ├── brun3
+│   │   │   │   ├── aln
+│   │   │   │   ├── anc
+│   │   │   │   └── anc_only
+│   │   │   ├── drun1
+│   │   │   └── drun2_KG
+│   │   ├── trimed_aln_birds
+│   │   ├── trimed_aln_birds_clean
+│   │   ├── trimed_aln_devilworm
+│   │   └── trimed_aln_devilworm_clean
+│   ├── processed
+│   │   ├── birds0
+│   │   ├── birds1
+│   │   ├── birds1_
+│   │   ├── birds_23-03-22-12-55-47
+│   │   ├── birds_24-03-22-20-56-51
+│   │   └── sbs_on_tree
+│   └── raw
+├── figures
+├── logs
+├── nb
+└── scripts
+    ├── __pycache__
+    └── server
+```
+
 
 ## References
 1. [R. Kimball (2019)](https://www.mdpi.com/1424-2818/11/7/109#supplementary) - constraint tree based on orders
