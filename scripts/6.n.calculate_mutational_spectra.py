@@ -269,7 +269,8 @@ class MutSpec:
         else:
             return mut, None, None
 
-    def calculate_mutspec12(self, mut: pd.DataFrame, nucl_freqs, label: str):
+    @staticmethod
+    def calculate_mutspec12(mut: pd.DataFrame, nucl_freqs, label: str):
         cols = ["Label", "Mut"]
         for c in cols:
             assert c in mut.columns, f"Column {c} is not in mut df"
@@ -306,8 +307,8 @@ class MutSpec:
         mutspec.drop("RefNuc", axis=1, inplace=True)
         return mutspec
 
-
-    def calculate_mutspec192(self, mut: pd.DataFrame, codon_freqs, label: str):
+    @staticmethod
+    def calculate_mutspec192(mut: pd.DataFrame, codon_freqs, label: str):
         cols = ["Label", "MutExt"]
         for c in cols:
             assert c in mut.columns, f"Column {c} is not in mut df"
