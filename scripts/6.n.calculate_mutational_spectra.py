@@ -109,15 +109,25 @@ class MutSpec:
                 parent_genome = self.node2genome[parent_node.name]
                 # collect_nucl_freqs = parent_node.name in total_nucl_freqs
                 sp_mutations = []
+
+                custom_nucl_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
+                codon_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
+
                 for gene in parent_genome:
                     genome_ref = parent_genome[gene].values
                     genome_alt = child_genome[gene].values
-                    mut, custom_nucl_freqs, codon_freqs = self.extract_mutations(
+                    mut, gene_nucl_freqs, gene_codon_freqs = self.extract_mutations(
                         genome_ref, genome_alt,
                         parent_node.name, cur_node.name,
                         gene,
                         # collect_nucl_freqs,
                     )
+                    for lbl in self.MUT_LABELS:
+                        for nucl, freq in gene_nucl_freqs[lbl].items():
+                            custom_nucl_freqs[lbl][nucl] += freq
+                        for trinucl, freq in gene_codon_freqs[lbl].items():
+                            codon_freqs[lbl][trinucl] += freq
+
                     # custom_nucl_freqs = custom_nucl_freqs or total_nucl_freqs[parent_node.name]
                     if len(mut) > 0:
                         sp_mutations.append(mut)
