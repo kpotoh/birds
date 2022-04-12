@@ -49,23 +49,14 @@ class MutSpec:
             gcode=2,
         ):
         self.MUT_LABELS = ["all", "ff"]  # TODO add syn
+        self.nucl_order = ["A", "C", "G", "T"]
         self.gcode = gcode
         self.codontable = CodonTable.unambiguous_dna_by_id[gcode]
         self.ff_codons = extract_ff_codons(self.codontable)
 
-        tree = PhyloTree(path_to_tree, format=1)
-        logger.info(f"tree loaded, number of leaf nodes: {len(tree)}")
-        anc = pd.read_csv(path_to_states, sep="\t", comment='#')
-        logger.info(f"anc states loaded, shape = {anc.shape}")
-        leaves = pd.read_csv(path_to_leaves, sep="\t")
-        logger.info(f"leaves loaded, shape = {leaves.shape}")
-        aln_sizes = leaves.groupby("Node").apply(len)
-        assert aln_sizes.nunique() == 1, "uncomplete state table"
-        exit(0)
+        tree, anc, leaves = self.read_data(path_to_tree, path_to_states, path_to_leaves)
         self.node2genome = self.precalc_node2genome(anc, leaves)
-        print("node2genome mapping builded", file=sys.stderr)
         self.nodes = set(self.node2genome.keys())
-        
         mutations, edge_mutspec12, edge_mutspec192, total_nucl_freqs = self.extract_mutspec_from_tree(tree)
 
         os.makedirs(out_dir)
@@ -86,15 +77,40 @@ class MutSpec:
     def precalc_node2genome(anc: pd.DataFrame, leaves: pd.DataFrame) -> dict:
         node2genome = defaultdict(dict)
         for states in [anc, leaves]:
+            logger.debug("Sorting states")
             states = states.sort_values(["Node", "Part", "Site"])
+            logger.debug("States sorted")
             gr = states.groupby(["Node", "Part"])
             for (node, part), gene_pos_ids in gr.groups.items():
                 gene_df = states.loc[gene_pos_ids]
-                gene = gene_df.State
-                node2genome[node][part] = gene
+                gene_states = gene_df[["p_A", "p_C", "p_G", "p_T"]].values
+                node2genome[node][part] = gene_states
+        logger.info("node2genome mapping builded")
         return node2genome
 
+    @staticmethod
+    def read_data(path_to_tree, path_to_states, path_to_leaves, states_dtype=np.float16):
+        tree = PhyloTree(path_to_tree, format=1)
+        logger.info(f"tree loaded, number of leaf nodes: {len(tree)}, total number of nodes: {len(tree.get_cached_content())}")
+        dtypes = {
+            "p_A": states_dtype, 
+            "p_C": states_dtype, 
+            "p_G": states_dtype, 
+            "p_T": states_dtype,
+            "Site": np.int32,
+            "Part": np.int8,
+        }
+        usecols = ["Node", "Part", "Site", "p_A", "p_C", "p_G", "p_T"]
+        anc = pd.read_csv(path_to_states, sep="\t", comment='#', usecols=usecols, dtype=dtypes)
+        logger.info(f"anc states loaded, shape = {anc.shape}")
+        leaves = pd.read_csv(path_to_leaves, sep="\t", usecols=usecols, dtype=dtypes)
+        logger.info(f"leaves states loaded, shape = {leaves.shape}")
+        aln_sizes = leaves.groupby("Node").apply(len)
+        assert aln_sizes.nunique() == 1, "uncomplete leaves state table"
+        return tree, anc, leaves
+
     def extract_mutspec_from_tree(self, tree):
+        logger.info("Start extracting mutspec from tree")
         discovered_nodes = set()
         discovered_nodes.add(tree.name)
         Q = Queue()
@@ -113,20 +129,20 @@ class MutSpec:
                 discovered_nodes.add(cur_node.name)
                 if cur_node.name not in self.nodes:
                     continue
+                parent_node = node_parent(cur_node)
 
                 # main process starts here
-                parent_node = node_parent(cur_node)
-                child_genome  = self.node2genome[cur_node.name]
-                parent_genome = self.node2genome[parent_node.name]
+                child_gene  = self.node2genome[cur_node.name]
+                parent_gene = self.node2genome[parent_node.name]
                 # collect_nucl_freqs = parent_node.name in total_nucl_freqs
                 sp_mutations = []
 
                 custom_nucl_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
                 codon_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
 
-                for gene in parent_genome:
-                    genome_ref = parent_genome[gene].values
-                    genome_alt = child_genome[gene].values
+                for gene in parent_gene:
+                    genome_ref = parent_gene[gene]
+                    genome_alt = child_gene[gene]
                     mut, gene_nucl_freqs, gene_codon_freqs = self.extract_mutations(
                         genome_ref, genome_alt,
                         parent_node.name, cur_node.name,
@@ -200,79 +216,85 @@ class MutSpec:
         - mut - dataframe of mutations
         - nucl_freqs - dict[lbl: dict[{ACGT}: int]] - nucleotide frequencies for all, syn and ff positions
         """
+        logger.debug(f"extraction of mutations from {name1} to {name2}")
         n, m = len(g1), len(g2)
         assert n == m, f"genomes lengths are not equal: {n} != {m}"
         assert n % 3 == 0, "genomes length must be divisible by 3 (codon structure)"
         if collect_nucl_freqs:
-            nucl_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
-            codon_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
+            nucl_freqs = {lbl: defaultdict(float) for lbl in self.MUT_LABELS}
+            codon_freqs = {lbl: defaultdict(float) for lbl in self.MUT_LABELS}
+
         mutations = []
-        for i in range(3, n - 3, 3):
-            # pass first and last positions due to context absence
-            # if i == 0 or i == n - 1:
-            #       in range
-                # continue
-            codon1 = g1[i: i + 3]
-            codon2 = g2[i: i + 3]
-            codon1_str = "".join(codon1)
-            codon2_str = "".join(codon2)
-            
-            if collect_nucl_freqs:
-                for j in range(3):
-                    nuc1 = codon1[j]
-                    up_nuc1 = g1[i + j - 1]
-                    down_nuc1 = g1[i + j + 1]
-                    context = f"{up_nuc1}{nuc1}{down_nuc1}"
-
-                    nucl_freqs["all"][nuc1] += 1
-                    codon_freqs["all"][context] += 1
-                    if j == 2 and self.is_four_fold(codon1_str):
-                        nucl_freqs["ff"][nuc1] += 1
-                        codon_freqs["ff"][context] += 1
-
-                    # TODO count specific nucl_freqs for syn
-                    # if (j == 1 or j == 2)??? and ...:
-                    #     nucl_freqs["syn"][nuc1] += 1
-
-            # each codon must contain only sbs and it cannot be indel
-            if (codon1 == codon2).sum() != 2 or '-' in codon1 or '-' in codon2:
+        for i in range(3, n - 3, 3):  # TODO go out from codons, pentanucleotides are required AND replace self.codon_iterator to 5nucl format sampling!!
+            cdn1_states = g1[i: i + 3]
+            cdn2_states = g2[i: i + 3]
+            if np.any(cdn1_states.sum(1) == 0) or np.any(cdn2_states.sum(1) == 0):
                 continue
+            
+            for cdn1, cdn1_proba in self.codon_iterator(cdn1_states):
+                cdn1_str = "".join(cdn1)
+                for cdn2, cdn2_proba in self.codon_iterator(cdn2_states):
+                    cdn2_str = "".join(cdn2)
 
-            label, aa1, aa2 = self.get_mut_label(codon1_str, codon2_str)
+                    if collect_nucl_freqs:
+                        for j in range(3):
+                            nuc1 = cdn1[j]
+                            # TODO add proba diversity here for context
+                            up_nuc1 = g1[i + j - 1]
+                            down_nuc1 = g1[i + j + 1]
+                            context = f"{up_nuc1}{nuc1}{down_nuc1}"
 
-            # collect sbs
-            for j in range(3):
-                nuc1, nuc2 = codon1[j], codon2[j]
-                if nuc1 == nuc2:
-                    continue
-                if label == 1 and j == 2:
-                    label = 2 if self.is_four_fold(codon1_str) else label
+                            nucl_freqs["all"][nuc1] += 1
+                            codon_freqs["all"][context] += 1
+                            if j == 2 and self.is_four_fold(cdn1_str):
+                                nucl_freqs["ff"][nuc1] += 1
+                                codon_freqs["ff"][context] += 1
+                            # TODO count specific nucl_freqs for syn
+                            # if (j == 1 or j == 2)??? and ...:
+                            #     nucl_freqs["syn"][nuc1] += 1
 
-                up_nuc1 = g1[i + j - 1]
-                down_nuc1 = g1[i + j + 1]
-                up_nuc2 = g2[i + j - 1]
-                down_nuc2 = g2[i + j + 1]
-                if up_nuc1 != up_nuc2 or down_nuc1 != down_nuc2 or up_nuc1 == "-" or down_nuc1 == "-":
-                    continue
+                    # each codon must contain only sbs and it cannot be indel
+                    if sum([cdn1[x] == cdn2[x] for x in range(3)]) != 2:
+                        continue
+                    # if '-' in cdn1 or '-' in cdn2:
+                    #     # redundant step
+                    #     continue
 
-                sbs = {
-                    "RefNode": name1,
-                    "AltNode": name2,
-                    "Gene": gene,
-                    "Mut": f"{nuc1}>{nuc2}",
-                    "MutExt": f"{up_nuc1}[{nuc1}>{nuc2}]{down_nuc1}",
-                    "Context": f"{up_nuc1}{nuc1}{down_nuc1}",
-                    "RefNucl": nuc1,
-                    "AltNucl": nuc2,
-                    "Label": label,
-                    "Pos": i + j + 1,
-                    "PosInCodon": j + 1,
-                    "RefCodon": codon1_str,
-                    "AltCodon": codon2_str,
-                    "RefAa": aa1,
-                    "AltAa": aa2,
-                }
-                mutations.append(sbs)
+                    label, aa1, aa2 = self.get_mut_label(cdn1_str, cdn2_str)
+
+                    # collect sbs
+                    for j in range(3):
+                        nuc1, nuc2 = cdn1[j], cdn2[j]
+                        if nuc1 == nuc2:
+                            continue
+                        if label == 1 and j == 2:
+                            label = 2 if self.is_four_fold(cdn1_str) else label
+
+                        up_nuc1 = g1[i + j - 1]
+                        down_nuc1 = g1[i + j + 1]
+                        up_nuc2 = g2[i + j - 1]
+                        down_nuc2 = g2[i + j + 1]
+                        if up_nuc1 != up_nuc2 or down_nuc1 != down_nuc2 or up_nuc1 == "-" or down_nuc1 == "-":
+                            continue
+
+                        sbs = {
+                            "RefNode": name1,
+                            "AltNode": name2,
+                            "Gene": gene,
+                            "Mut": f"{nuc1}>{nuc2}",
+                            "MutExt": f"{up_nuc1}[{nuc1}>{nuc2}]{down_nuc1}",
+                            "Context": f"{up_nuc1}{nuc1}{down_nuc1}",
+                            "RefNucl": nuc1,
+                            "AltNucl": nuc2,
+                            "Label": label,
+                            "Pos": i + j + 1,
+                            "PosInCodon": j + 1,
+                            "RefCodon": cdn1_str,
+                            "AltCodon": cdn2_str,
+                            "RefAa": aa1,
+                            "AltAa": aa2,
+                        }
+                        mutations.append(sbs)
         
         # if len(mutations) > n * 0.1:
         #     print(f"""
@@ -366,6 +388,23 @@ class MutSpec:
         mutspec["MutSpec"] = mutspec["RawMutSpec"] / mutspec["RawMutSpec"].sum()
         mutspec.drop("Context", axis=1, inplace=True)
         return mutspec
+
+    def codon_iterator(self, codon_states: np.ndarray, cutoff=0.01):
+        assert codon_states.shape == (3, 4)
+        for i, p1 in enumerate(codon_states[0]):
+            if p1 < cutoff:
+                continue
+            for j, p2 in enumerate(codon_states[1]):
+                if p2 < cutoff:
+                    continue
+                for k, p3 in enumerate(codon_states[2]):
+                    if p3 < cutoff:
+                        continue
+                    codon_proba = p1 * p2 * p3
+                    if codon_proba < cutoff:
+                        continue
+                    codon = [self.nucl_order[x] for x in [i, j, k]]
+                    yield codon, codon_proba
 
     def is_four_fold(self, codon):
         return codon in self.ff_codons

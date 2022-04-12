@@ -9,20 +9,11 @@ handlers:
     level: DEBUG
     formatter: default_console_process
     stream: ext://sys.stdout
-  colored_console:
-    class: logging.StreamHandler
-    level: DEBUG
-    formatter: default_console_process
-    stream: ext://sys.stdout
 loggers:
   custom:
     level: DEBUG
     handlers: [console]
     propagate: no
-  colored:
-    level: DEBUG
-    handlers: [colored_console]
-    propagate: no
 root:
-  level: INFO
-  handlers: [colored_console]
+  level: DEBUG
+  handlers: [console]
