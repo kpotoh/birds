@@ -430,6 +430,36 @@ class MutSpec:
                     else:
                         yield codon, codon, codon_proba
 
+    def context_iterator_fast(self, pos, pos_in_codon, genome: np.ndarray, cutoff=0.01):
+        codon_states = genome[pos - pos_in_codon: pos - pos_in_codon + 3]        
+        extra_codon_states = genome[pos + pos_in_codon - 1]  # doesn't mean if pos_in_codon == 1
+        # gaps are not appropriate
+        if np.any(codon_states.sum(1) == 0) or extra_codon_states.sum() == 0:
+            return
+
+        a, b, c = codon_states
+        probas = a * b[:, None] * c[:, None, None]
+        _ii = 0  # increment index if there are 4th context nucl
+        if pos_in_codon != 1:
+            probas = probas * extra_codon_states[:, None, None, None]
+            _ii = 1
+
+        indexes = np.where(probas > cutoff)
+        for idx in range(len(indexes[0])):
+            i, j, k = indexes[2+_ii][idx], indexes[1+_ii][idx], indexes[0+_ii][idx]
+            m = indexes[0][idx]
+
+            codon = [self.nucl_order[_] for _ in [i, j, k]]
+            full_proba = probas[k, j, i]
+            if pos_in_codon == 0:
+                mut_context = [self.nucl_order[_] for _ in [m, i, j]]
+            elif pos_in_codon == 2:
+                mut_context = [self.nucl_order[_] for _ in [j, k, m]]
+            elif pos_in_codon == 1:
+                full_proba = probas[m, k, j, i]
+            
+            yield codon, mut_context, full_proba
+
     def is_four_fold(self, codon):
         return codon in self.ff_codons
 
