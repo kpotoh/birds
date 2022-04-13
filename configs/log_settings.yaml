@@ -8,7 +8,7 @@ handlers:
     class: logging.StreamHandler
     level: DEBUG
     formatter: default_console_process
-    stream: ext://sys.stdout
+    stream: ext://sys.stderr
 loggers:
   custom:
     level: DEBUG

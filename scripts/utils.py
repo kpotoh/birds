@@ -8,11 +8,7 @@ from Bio.Data.CodonTable import NCBICodonTableDNA
 PATH_TO_GENCODE5 = "data/external/genetic_code5.txt"
 
 
-# TODO replace by biopython codontable
-######################################
-######################################
-
-def read_gencode(path: str) -> List[Tuple[str]]:
+def _read_gencode(path: str) -> List[Tuple[str]]:
     pattern = re.compile("([ACGT]{3})\s([A-Z\*])\s([A-Za-z]{3})\s(i?)")
     gencode = []
     with open(path) as fin:
@@ -22,8 +18,8 @@ def read_gencode(path: str) -> List[Tuple[str]]:
     return gencode
 
 
-def read_start_stop_codons(path: str) -> Tuple[Set[str]]:
-    gencode = read_gencode(path)
+def _read_start_stop_codons(path: str) -> Tuple[Set[str]]:
+    gencode = _read_gencode(path)
     startcodons = set()
     stopcodons = set()
     for code in gencode:
@@ -34,8 +30,15 @@ def read_start_stop_codons(path: str) -> Tuple[Set[str]]:
     return startcodons, stopcodons
 
 
-######################################
-######################################
+def read_start_stop_codons(codontable: Union[NCBICodonTableDNA, int]):
+    if isinstance(codontable, NCBICodonTableDNA):
+        pass
+    elif isinstance(codontable, int):
+        codontable = CodonTable.unambiguous_dna_by_id[codontable]
+    else:
+        ValueError("passed codontable is not appropriate")
+
+    return set(codontable.start_codons), set(codontable.stop_codons)
 
 
 def extract_ff_codons(codontable: Union[NCBICodonTableDNA, int]):
@@ -63,14 +66,20 @@ def extract_ff_codons(codontable: Union[NCBICodonTableDNA, int]):
     return ff_codons
 
 
-def extract_syn_codons(codontable: Union[NCBICodonTableDNA, int]):
+def is_syn_codons(codon1: str, codon2: str, codontable: Union[NCBICodonTableDNA, int]):
     """
     extract codons containing mutation that are synonymous
 
-    return dict[codon: set[PosInCodon]] 
+    return dict[codon: set[PosInCodon]]
     """
+    if isinstance(codontable, NCBICodonTableDNA):
+        pass
+    elif isinstance(codontable, int):
+        codontable = CodonTable.unambiguous_dna_by_id[codontable]
+    else:
+        ValueError("passed codontable is not appropriate")
 
-    return 
+    return codontable.forward_table[codon1] == codontable.forward_table[codon2]
 
 
 def node_parent(node):
@@ -127,4 +136,5 @@ possible_codons = {
 
 
 if __name__ == "__main__":
-    print(read_start_stop_codons(PATH_TO_GENCODE5))
+    # print(read_start_stop_codons(2))
+    is_syn_codons("ATA", "ACT", 2)
