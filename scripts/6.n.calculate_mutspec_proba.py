@@ -24,7 +24,7 @@ import pandas as pd
 from Bio.Data import CodonTable
 from ete3 import PhyloTree
 
-from utils import (extract_ff_codons, is_syn_codons, node_parent, profiler,
+from utils import (extract_syn_codons, is_syn_codons, node_parent, profiler,
                    possible_codons, possible_sbs12, possible_sbs192)
 
 EPS = 1e-5
@@ -52,7 +52,7 @@ class MutSpec:
         self.nucl_order = ["A", "C", "G", "T"]
         self.gcode = gcode
         self.codontable = CodonTable.unambiguous_dna_by_id[gcode]
-        self.ff_codons = extract_ff_codons(self.codontable)
+        self.ff_codons, self.syn_codons = extract_syn_codons(self.codontable)
 
         tree, anc, leaves = self.read_data(path_to_tree, path_to_states, path_to_leaves)
         self.node2genome = self.precalc_node2genome(anc, leaves)
@@ -145,7 +145,7 @@ class MutSpec:
                 for gene in parent_gene:
                     genome_ref = parent_gene[gene]
                     genome_alt = child_gene[gene]
-                    mut = self.extract_mutations(
+                    gene_mut = self.extract_mutations(
                         genome_ref, genome_alt,
                         parent_node.name, cur_node.name, gene,
                     )
@@ -156,8 +156,8 @@ class MutSpec:
                     #         codon_freqs[lbl][trinucl] += freq
 
                     # custom_nucl_freqs = custom_nucl_freqs or total_nucl_freqs[parent_node.name]
-                    if len(mut) > 0:
-                        sp_mutations.append(mut)
+                    if len(gene_mut) > 0:
+                        sp_mutations.append(gene_mut)
                 
                 if len(sp_mutations) == 0:
                     continue
@@ -221,8 +221,6 @@ class MutSpec:
         - mut - dataframe of mutations
         - nucl_freqs - dict[lbl: dict[{ACGT}: int]] - nucleotide frequencies for all, syn and ff positions
         """
-        # profile = cProfile.Profile()
-        # profile.enable()
         n, m = len(g1), len(g2)
         assert n == m, f"genomes lengths are not equal: {n} != {m}"
         assert n % 3 == 0, "genomes length must be divisible by 3 (codon structure)"
@@ -230,9 +228,9 @@ class MutSpec:
         mutations = []
         for pos in range(1, n - 1):
             pos_in_codon = pos % 3  # 0-based
-            for cdn1, mut_cxt1, proba1 in self.context_iterator_fast(pos, pos_in_codon, g1):
+            for cdn1, mut_cxt1, proba1 in self.sample_context_fast(pos, pos_in_codon, g1):
                 cdn1_str = "".join(cdn1)
-                for cdn2, mut_cxt2, proba2 in self.context_iterator_fast(pos, pos_in_codon, g2):
+                for cdn2, mut_cxt2, proba2 in self.sample_context_fast(pos, pos_in_codon, g2):
                     cdn2_str = "".join(cdn2)
 
                     nuc1, nuc2 = mut_cxt1[1], mut_cxt2[1]
@@ -251,13 +249,7 @@ class MutSpec:
                         "RefNode": name1,
                         "AltNode": name2,
                         "Gene": gene,
-                        "Mut": f"{up_nuc1}[{nuc1}>{nuc2}]{down_nuc1}",
-
-                        # "MutBase": f"{nuc1}>{nuc2}",
-                        # "Context": "".join(mut_cxt1),
-                        # "RefNucl": nuc1,
-                        # "AltNucl": nuc2,
-                        
+                        "Mut": f"{up_nuc1}[{nuc1}>{nuc2}]{down_nuc1}",                        
                         "Effect": label,
                         "Pos": pos + 1,
                         "PosInCodon": pos_in_codon + 1,
@@ -271,30 +263,32 @@ class MutSpec:
                     mutations.append(sbs)
 
         mut_df = pd.DataFrame(mutations)
-        # profile.disable()
-        # ps = pstats.Stats(profile)
-        # ps.sort_stats('cumtime', 'calls')
-        # ps.print_stats()
         return mut_df
 
     def collect_freqs(self, genome: np.ndarray):
-                    # if collect_freqs:
-                    #     nuc1 = cdn1[pos_in_codon]
-                    #     up_nuc1 = g1[i + j - 1]
-                    #     down_nuc1 = g1[i + j + 1]
-                    #     context = f"{up_nuc1}{nuc1}{down_nuc1}"
+        n = len(genome)
+        assert n % 3 == 0, "genomes length must be divisible by 3 (codon structure)"
 
-                    #     nucl_freqs["all"][nuc1] += 1
-                    #     codon_freqs["all"][context] += 1
-                    #     if j == 2 and self.is_four_fold(cdn1_str):
-                    #         nucl_freqs["ff"][nuc1] += 1
-                    #         codon_freqs["ff"][context] += 1
-                    #     if self.is_syn(cdn1_str, cdn2_str):
-                    #         nucl_freqs["syn"][nuc1] += 1
-                    #         codon_freqs["syn"][context] += 1
-                                                        
-                    # ...
-        pass
+        nucl_freqs = {lbl: defaultdict(np.float16) for lbl in ("all", "syn", "ff")}
+        cxt_freqs = {lbl: defaultdict(np.float16) for lbl in ("all", "syn", "ff")}
+
+        # nucl_freqs["all"] = {
+        #     self.nucl_order[i]: fr for i, fr in enumerate(genome.sum(axis=1))
+        # }
+        for pos in range(1, n - 1):
+            pic = pos % 3  # 0-based
+            for cdn, cxt, proba in self.sample_context_fast(pos, pic, genome, 0.001):
+                nuc = cxt[1]
+                nucl_freqs["all"][nuc] += proba
+                cxt_freqs["all"][cxt]  += proba
+                if pic == 2 and cdn in self.ff_codons:
+                    nucl_freqs["ff"][nuc] += proba
+                    cxt_freqs["ff"][cxt]  += proba
+                if (cdn, pic) in self.syn_codons:
+                    nucl_freqs["syn"][nuc] += proba * self.syn_codons[(cdn, pic)]
+                    cxt_freqs["syn"][cxt]  += proba * self.syn_codons[(cdn, pic)]
+
+        return nucl_freqs, cxt_freqs
 
     @staticmethod
     def calculate_mutspec12(mut: pd.DataFrame, nucl_freqs, label: str):
@@ -389,7 +383,7 @@ class MutSpec:
                     codon = [self.nucl_order[x] for x in [i, j, k]]
                     yield codon, codon_proba
 
-    def context_iterator(self, pos, pos_in_codon, genome: np.ndarray, cutoff=0.01):
+    def sample_context(self, pos, pos_in_codon, genome: np.ndarray, cutoff=0.01):
         nuc_cutoff = cutoff * 5
         codon_states = genome[pos - pos_in_codon: pos - pos_in_codon + 3]        
         extra_codon_states = genome[pos + pos_in_codon - 1]  # doesn't mean if pos_in_codon == 1
@@ -426,7 +420,7 @@ class MutSpec:
                     else:
                         yield codon, codon, codon_proba
 
-    def context_iterator_fast(self, pos, pos_in_codon, genome: np.ndarray, cutoff=0.01):
+    def sample_context_fast(self, pos, pos_in_codon, genome: np.ndarray, cutoff=0.01):
         codon_states = genome[pos - pos_in_codon: pos - pos_in_codon + 3]        
         extra_codon_states = genome[pos + pos_in_codon - 1]  # doesn't mean if pos_in_codon == 1
         # gaps are not appropriate
@@ -462,7 +456,7 @@ class MutSpec:
         return codon in self.ff_codons
 
     def is_syn(self, codon1, codon2):
-        return is_syn_codons(codon1, codon2, self.gcode)
+        return self.codontable.forward_table[codon1] == self.codontable.forward_table[codon2]
         
     def get_mut_label(self, codon1: str, codon2: str, pos_in_codon: int):
         """

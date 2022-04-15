@@ -33,25 +33,23 @@ def _read_start_stop_codons(path: str) -> Tuple[Set[str]]:
     return startcodons, stopcodons
 
 
-def read_start_stop_codons(codontable: Union[NCBICodonTableDNA, int]):
+def __prepare_codontable(codontable: Union[NCBICodonTableDNA, int]):
     if isinstance(codontable, NCBICodonTableDNA):
         pass
     elif isinstance(codontable, int):
         codontable = CodonTable.unambiguous_dna_by_id[codontable]
     else:
         ValueError("passed codontable is not appropriate")
+    return codontable
 
+
+def read_start_stop_codons(codontable: Union[NCBICodonTableDNA, int]):
+    codontable = __prepare_codontable(codontable)
     return set(codontable.start_codons), set(codontable.stop_codons)
 
 
-def extract_ff_codons(codontable: Union[NCBICodonTableDNA, int]):
-    if isinstance(codontable, NCBICodonTableDNA):
-        pass
-    elif isinstance(codontable, int):
-        codontable = CodonTable.unambiguous_dna_by_id[codontable]
-    else:
-        ValueError("passed codontable is not appropriate")
-
+def _extract_ff_codons(codontable: Union[NCBICodonTableDNA, int]):
+    codontable = __prepare_codontable(codontable)
     aa2codons = defaultdict(set)
     for codon, aa in codontable.forward_table.items():
         aa2codons[aa].add(codon)
@@ -69,19 +67,46 @@ def extract_ff_codons(codontable: Union[NCBICodonTableDNA, int]):
     return ff_codons
 
 
+def extract_syn_codons(codontable: Union[NCBICodonTableDNA, int]):
+    """ extract synonymous (codons that mutate without amino acid change) 
+    and fourfold codons from codon table
+
+    return mapping[(cdn, pic)] of syn codons and set of ff codons
+    """
+    codontable = __prepare_codontable(codontable)
+    aa2codons = defaultdict(set)
+    for codon, aa in codontable.forward_table.items():
+        aa2codons[aa].add(codon)
+
+    syn_codons = defaultdict(int)
+    for aa, codons in aa2codons.items():
+        if len(codons) > 1:
+            interim_dct = defaultdict(set)
+            for i, slc in enumerate([slice(1, 3), slice(0, 3, 2), slice(0, 2)]):
+                for codon in codons:
+                    cdn_stump = codon[slc]
+                    interim_dct[(cdn_stump, i)].add(codon)
+
+            for key, aa_syn_codons in interim_dct.items():
+                if len(aa_syn_codons) > 1:
+                    pic = key[1]
+                    for cdn in aa_syn_codons:
+                        syn_codons[(cdn, pic)] += len(aa_syn_codons) - 1
+
+    ff_codons = set()
+    for (cdn, pic), num in syn_codons.items():
+        if num == 3 and pic == 2:
+            ff_codons.add(cdn)
+    return dict(syn_codons), ff_codons
+
+
 def is_syn_codons(codon1: str, codon2: str, codontable: Union[NCBICodonTableDNA, int]):
     """
     extract codons containing mutation that are synonymous
 
     return dict[codon: set[PosInCodon]]
     """
-    if isinstance(codontable, NCBICodonTableDNA):
-        pass
-    elif isinstance(codontable, int):
-        codontable = CodonTable.unambiguous_dna_by_id[codontable]
-    else:
-        ValueError("passed codontable is not appropriate")
-
+    codontable = __prepare_codontable(codontable)
     return codontable.forward_table[codon1] == codontable.forward_table[codon2]
 
 
@@ -160,4 +185,10 @@ possible_codons = {
 
 if __name__ == "__main__":
     # print(read_start_stop_codons(2))
-    is_syn_codons("ATA", "ACT", 2)
+    # print(extract_syn_codons(2))
+    code = 5
+    syn_codons, ff_codons = extract_syn_codons(code)
+    ff_codons_true = extract_ff_codons(code)
+    print(syn_codons)
+    assert ff_codons == ff_codons_true
+
