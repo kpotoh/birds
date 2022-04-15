@@ -158,7 +158,7 @@ class MutSpec:
 
                     if len(gene_mut_df) > 0:
                         genome_mutations.append(gene_mut_df)
-                    if len(gene_mut_df) > 100:
+                    if len(gene_mut_df) > 200:
                         genes_mutations.append(gene_mut_df)
                 
                 if len(genome_mutations) == 0:
@@ -187,6 +187,8 @@ class MutSpec:
                     edge_mutspec192[lbl].append(mutspec192)
 
                 total_nucl_freqs.append(cur_nucl_freqs)
+            # if len(full_tree_mutations) == 10:
+            #     break  # TODO remove line
 
         full_tree_mutations_df = pd.concat(full_tree_mutations)
         return full_tree_mutations_df
@@ -195,8 +197,6 @@ class MutSpec:
         # edge_mutspec192_df = {lbl: pd.concat(x) for lbl, x in edge_mutspec192.items()}
         # return mutations_df, edge_mutspec12_df, edge_mutspec192_df, total_nucl_freqs_df
 
-            if len(full_tree_mutations) == 10:
-                break  # TODO remove line
 
     def extract_mutations(
             self, 
@@ -296,7 +296,7 @@ class MutSpec:
 
     @staticmethod
     def calculate_mutspec12(mut: pd.DataFrame, nucl_freqs, label: str):
-        cols = ["Label", "Mut"]
+        cols = ["Effect", "Mut"]
         for c in cols:
             assert c in mut.columns, f"Column {c} is not in mut df"
 
@@ -314,7 +314,7 @@ class MutSpec:
         else:
             raise ValueError(f"pass the appropriate label: {labels}")
 
-        mutspec = mut[mut.Label >= label].Mut.value_counts().reset_index()
+        mutspec = mut[mut["Effect"] >= label].Mut.value_counts().reset_index()
         mutspec.columns = ["Mut", "ObsFr"]
 
         mutspec_appendix = []
@@ -334,7 +334,7 @@ class MutSpec:
 
     @staticmethod
     def calculate_mutspec192(mut: pd.DataFrame, codon_freqs, label: str):
-        cols = ["Label", "MutExt"]
+        cols = ["Effect", "MutExt"]
         for c in cols:
             assert c in mut.columns, f"Column {c} is not in mut df"
 
@@ -352,7 +352,7 @@ class MutSpec:
         else:
             raise ValueError(f"pass the appropriate label: {available_labels}")
 
-        mutspec = mut[mut.Label >= label].MutExt.value_counts().reset_index()
+        mutspec = mut[mut["Effect"] >= label].MutExt.value_counts().reset_index()
         mutspec.columns = ["Mut", "ObsFr"]
 
         mutspec_appendix = []
