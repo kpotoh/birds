@@ -91,7 +91,7 @@ class MutSpec:
 
         edge_mutspec12 = defaultdict(list)  # all, syn, ff
         edge_mutspec192 = defaultdict(list)
-        mutations = []
+        full_tree_mutations = []
         total_nucl_freqs = []  # dict()
         while not Q.empty():
             cur_node = Q.get()
@@ -108,15 +108,15 @@ class MutSpec:
                 child_genome  = self.node2genome[cur_node.name]
                 parent_genome = self.node2genome[parent_node.name]
                 # collect_nucl_freqs = parent_node.name in total_nucl_freqs
-                sp_mutations = []
+                genome_mutations = []
 
-                custom_nucl_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
-                codon_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
+                genome_nucl_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
+                genome_cxt_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
 
                 for gene in parent_genome:
                     genome_ref = parent_genome[gene].values
                     genome_alt = child_genome[gene].values
-                    mut, gene_nucl_freqs, gene_codon_freqs = self.extract_mutations(
+                    gene_mut_df, gene_nucl_freqs, gene_cxt_freqs = self.extract_mutations(
                         genome_ref, genome_alt,
                         parent_node.name, cur_node.name,
                         gene,
@@ -124,30 +124,31 @@ class MutSpec:
                     )
                     for lbl in self.MUT_LABELS:
                         for nucl, freq in gene_nucl_freqs[lbl].items():
-                            custom_nucl_freqs[lbl][nucl] += freq
-                        for trinucl, freq in gene_codon_freqs[lbl].items():
-                            codon_freqs[lbl][trinucl] += freq
+                            genome_nucl_freqs[lbl][nucl] += freq
+                        for trinucl, freq in gene_cxt_freqs[lbl].items():
+                            genome_cxt_freqs[lbl][trinucl] += freq
 
-                    # custom_nucl_freqs = custom_nucl_freqs or total_nucl_freqs[parent_node.name]
-                    if len(mut) > 0:
-                        sp_mutations.append(mut)
+                    # genome_nucl_freqs = genome_nucl_freqs or total_nucl_freqs[parent_node.name]
+                    if len(gene_mut_df) > 0:
+                        genome_mutations.append(gene_mut_df)
                 
-                if len(sp_mutations) == 0:
+                if len(genome_mutations) == 0:
                     continue
 
-                sp_mutations_df = pd.concat(sp_mutations)
-                mutations.append(sp_mutations_df)
+                genome_mutations_df = pd.concat(genome_mutations)
+                full_tree_mutations.append(genome_mutations_df)
+
                 cur_nucl_freqs = {"node": parent_node.name}
                 for lbl in self.MUT_LABELS:
                     for _nucl in "ACGT":
-                        cur_nucl_freqs[f"{_nucl}_{lbl}"] = custom_nucl_freqs[lbl][_nucl]
+                        cur_nucl_freqs[f"{_nucl}_{lbl}"] = genome_nucl_freqs[lbl][_nucl]
                     if lbl == "syn":
                         raise NotImplementedError
 
-                    mutspec12 = self.calculate_mutspec12(sp_mutations_df, custom_nucl_freqs[lbl], label=lbl)
+                    mutspec12 = self.calculate_mutspec12(genome_mutations_df, genome_nucl_freqs[lbl], label=lbl)
                     mutspec12["RefNode"] = parent_node.name
                     mutspec12["AltNode"] = cur_node.name
-                    mutspec192 = self.calculate_mutspec192(sp_mutations_df, codon_freqs[lbl], label=lbl)
+                    mutspec192 = self.calculate_mutspec192(genome_mutations_df, genome_cxt_freqs[lbl], label=lbl)
                     mutspec192["RefNode"] = parent_node.name
                     mutspec192["AltNode"] = cur_node.name
 
@@ -156,7 +157,7 @@ class MutSpec:
 
                 total_nucl_freqs.append(cur_nucl_freqs)
 
-        mutations_df = pd.concat(mutations)
+        mutations_df = pd.concat(full_tree_mutations)
         total_nucl_freqs_df = pd.DataFrame(total_nucl_freqs).drop_duplicates()  # TODO rewrite to normal optimal decision
         edge_mutspec12_df = {lbl: pd.concat(x) for lbl, x in edge_mutspec12.items()}
         edge_mutspec192_df = {lbl: pd.concat(x) for lbl, x in edge_mutspec192.items()}
