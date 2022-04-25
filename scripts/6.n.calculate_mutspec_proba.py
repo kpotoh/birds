@@ -89,6 +89,9 @@ class MutSpec:
                 node2genome[node][part] = gene_states
         logger.info("node2genome mapping builded")
         return node2genome
+    
+    def get_genome(self, node: str):
+        return self.node2genome[node]
 
     @staticmethod
     def read_data(path_to_tree, path_to_states, path_to_leaves, states_dtype=np.float16):
@@ -135,8 +138,8 @@ class MutSpec:
 
                 # main process starts here
                 logger.debug(f"extracting mutations from {parent_node.name} to {cur_node.name}")
-                parent_gene = self.node2genome[parent_node.name]
-                child_gene  = self.node2genome[cur_node.name]
+                parent_gene = self.get_genome(parent_node.name)
+                child_gene  = self.get_genome(cur_node.name)
 
                 genome_nucl_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
                 genome_cxt_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
