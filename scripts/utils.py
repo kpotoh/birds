@@ -71,6 +71,8 @@ def extract_syn_codons(codontable: Union[NCBICodonTableDNA, int]):
     """ extract synonymous (codons that mutate without amino acid change) 
     and fourfold codons from codon table
 
+    usefull function for expected mutspec (filtration)
+
     return mapping[(cdn, pic)] of syn codons and set of ff codons
     """
     codontable = __prepare_codontable(codontable)
@@ -107,7 +109,8 @@ def is_syn_codons(codon1: str, codon2: str, codontable: Union[NCBICodonTableDNA,
     return dict[codon: set[PosInCodon]]
     """
     codontable = __prepare_codontable(codontable)
-    return codontable.forward_table[codon1] == codontable.forward_table[codon2]
+    gc = codontable.forward_table
+    return gc.get(codon1, "*") == gc.get(codon2, "*")
 
 
 def node_parent(node):
