@@ -140,6 +140,7 @@ class MutSpec:
                 logger.debug(f"extracting mutations from {parent_node.name} to {cur_node.name}")
                 parent_gene = self.get_genome(parent_node.name)
                 child_gene  = self.get_genome(cur_node.name)
+                _, dist_to_closest_leaf = parent_node.get_closest_leaf()
 
                 genome_nucl_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
                 genome_cxt_freqs = {lbl: defaultdict(int) for lbl in self.MUT_LABELS}
@@ -152,6 +153,7 @@ class MutSpec:
                         gene_ref, gene_alt,
                         parent_node.name, cur_node.name, gene,
                     )
+                    gene_mut_df["DistToLeaf"] = dist_to_closest_leaf
                     gene_nucl_freqs, gene_cxt_freqs = self.collect_freqs(gene_ref)
                     for lbl in self.MUT_LABELS:
                         for nucl, freq in gene_nucl_freqs[lbl].items():
