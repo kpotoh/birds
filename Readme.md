@@ -146,21 +146,25 @@ All tests performed 1000 resamplings using the RELL method.
 ```
 ### 6 Mutational spectra
 
-Pseudocode for spectra extraction:
-```
-for codon in seq:
-  for nucl in seq:
-    context = ...
-    mut = ...
-    
-
-```
-
 6.1 Prepare appropriate format of leaves states
 ```
-
+python scripts/6.1.terminal_genomes2iqtree_format.py --aln data/interim/alignments_birds_clean_clean --scheme data/interim/scheme_birds_genes.nex --out data/interim/leaves_birds_states.tsv
 ```
 
+6.2 Prepare appropriate format of internal states from iqtree
+```
+python scripts/6.2.states2iqtree_format.py --anc data/interim/iqtree_runs/brun3/anc_kg/anc_kg.state --leaves data/interim/leaves_birds_states.tsv --out data/interim/anc_kg_states_birds.tsv
+```
+
+6.3 Caclulate MutSpec on most probable states
+```
+python scripts/6.3.calculate_mutational_spectra.py
+```
+
+6.4 Caclulate MutSpec using state probabilities
+```
+python scripts/6.4.calculate_mutational_spectra_proba.py
+```
 
 ## Stuff
 

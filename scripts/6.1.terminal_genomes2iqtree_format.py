@@ -4,7 +4,7 @@ Only filenames need for this, but if there are preliminary aln concatenation it 
 
 Internal States must be rewritten to similar format 
 
-TODO rewrite input - only aln-files(!!!) BUT WE'll LOOSE THA PARTS INDEXES
+TODO rewrite input - only aln-files(!!!) BUT WE'll LOOSE THE PARTS INDEXES
 
 """
 
