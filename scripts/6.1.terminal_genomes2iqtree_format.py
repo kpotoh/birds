@@ -50,7 +50,7 @@ def parse_alignment(files: list, scheme: dict, aln_dir, out) -> Tuple[str, int]:
     """
     read fasta files from scheme with alignments and write states to table
 
-    return states table and full alignment length
+    return full alignment length
     """
     handle = open(out, "w")
     columns = "Node Part Site State p_A p_C p_G p_T".split()
@@ -75,17 +75,18 @@ def parse_alignment(files: list, scheme: dict, aln_dir, out) -> Tuple[str, int]:
                 handle.write("\t".join(pos_data) + "\n")
         aln_lens.append(len(seq))
 
-    _pass = False
+    # get max set of parts
     for node, parts in history.items():
         if len(parts) == NGENES:
-            if _pass:
-                continue
             full_parts = parts.copy()
-            _pass = False
-        else:
+            break
+    
+    # fill missing genes by '-'
+    for node, parts in history.items():
+        if len(parts) != NGENES:
             unseen_parts = set(full_parts).difference(parts)
             for unp in unseen_parts:
-                print(f"Gap filling of part {unp} for node {node}...", file=sys.stderr)
+                print(f"Gap filling for node {node}, part {unp}...", file=sys.stderr)
                 for site in range(1, aln_lens[unp - 1] + 1):
                     pos_data = [node, str(unp), str(site), "-", "0", "0", "0", "0"]
                     handle.write("\t".join(pos_data) + "\n")
@@ -108,4 +109,4 @@ def main(aln_dir, scheme_path, out):
 
 if __name__ == "__main__":
     main()
-    # main("data/interim/alignments_birds_clean_clean", "data/interim/scheme_birds_genes.nex", "data/interim/leaves_birds_states.tsv")
+    # main("data/interim/trimed_aln_devilworm_clean", "data/interim/scheme_nematoda_genes.nex", "data/interim/leaves_nematoda_states.tsv")
