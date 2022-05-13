@@ -11,7 +11,7 @@ data/raw/*
 data/interim/*
 !data/interim/taxonomy*
 !data/interim/*.tre
-!data/interim/species*.txt
+!data/interim/*.txt
 !data/interim/scheme_*.nex
 
 
