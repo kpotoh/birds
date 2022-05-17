@@ -200,6 +200,7 @@ python scripts/6.4.calculate_mutational_spectra_proba.py
 
 ```bash
 parallel tail -n 1 {} ::: *.fna | paste -s -d '' | wc  # minus one
+parallel printf {/.} ';' printf "," ';' tail -n 1 {} '|' wc -m ::: data/example_nematoda/aln/*.fna
 ```
 
 ## References
