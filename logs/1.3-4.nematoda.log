@@ -1,0 +1,121 @@
+(env_birds) kpotoh:~/birds$ bash scripts/1.3.qc_aln.sh data/interim/alignments_devilworm/*.fna
+Label nematoda
+Using Gencode 5
+
+Drop pseudogenes from ND1.fna
+!!! Frameshift detected !!!
+Dictyocaulus_eckerti 
+
+!!! Frameshift detected !!!
+Passalurus_ambiguus 
+
+!!! Frameshift detected !!!
+Heliconema_longissimum 
+
+Drop pseudogenes from COX2.fna
+!!! Frameshift detected !!!
+Passalurus_ambiguus 
+
+!!! Frameshift detected !!!
+Oxyuris_equi 
+
+Drop pseudogenes from ND3.fna
+!!! Frameshift detected !!!
+Thelazia_callipaeda 
+
+!!! Frameshift detected !!!
+Setaria_digitata 
+
+!!! Frameshift detected !!!
+Dictyocaulus_eckerti 
+
+Drop pseudogenes from CYTB.fna
+!!! Frameshift detected !!!
+Pseudoterranova_azarasi 
+
+Drop pseudogenes from COX1.fna
+!!! Frameshift detected !!!
+Cylicodontophorus_bicoronatus 
+
+!!! Frameshift detected !!!
+Cylicostephanus_minutus 
+
+!!! Frameshift detected !!!
+Angiostrongylus_vasorum 
+
+Drop pseudogenes from ND6.fna
+!!! Frameshift detected !!!
+Spirocerca_lupi 
+
+!!! Frameshift detected !!!
+Mecistocirrus_digitatus 
+
+Drop pseudogenes from ATP6.fna
+!!! Frameshift detected !!!
+Dictyocaulus_eckerti 
+
+!!! Frameshift detected !!!
+Passalurus_ambiguus 
+
+!!! Frameshift detected !!!
+Oxyuris_equi 
+
+Drop pseudogenes from ND4L.fna
+!!! Frameshift detected !!!
+Philometroides_sanguineus 
+
+!!! Frameshift detected !!!
+Thelazia_callipaeda 
+
+Drop pseudogenes from COX3.fna
+!!! Frameshift detected !!!
+Angiostrongylus_vasorum 
+
+!!! Frameshift detected !!!
+Baylisascaris_transfuga 
+
+!!! Frameshift detected !!!
+Passalurus_ambiguus 
+
+!!! Frameshift detected !!!
+Oxyuris_equi 
+
+Drop pseudogenes from ND2.fna
+Drop pseudogenes from ND5.fna
+!!! Frameshift detected !!!
+Angiostrongylus_vasorum 
+
+!!! Frameshift detected !!!
+Pseudoterranova_decipiens_sensu_lato_Germany 
+
+Drop pseudogenes from ND4.fna
+!!! Frameshift detected !!!
+Pseudoterranova_azarasi 
+
+!!! Frameshift detected !!!
+Oxyuris_equi 
+
+!!! Frameshift detected !!!
+Passalurus_ambiguus 
+
+Species with low number of genes:
+Angiostrongylus_vasorum|Dictyocaulus_eckerti|Oxyuris_equi|Passalurus_ambiguus|Agapornis_pullarius
+
+Drop species with low number of genes from ATP6.fna
+Drop species with low number of genes from COX1.fna
+Drop species with low number of genes from COX2.fna
+Drop species with low number of genes from COX3.fna
+Drop species with low number of genes from CYTB.fna
+Drop species with low number of genes from ND1.fna
+Drop species with low number of genes from ND2.fna
+Drop species with low number of genes from ND3.fna
+Drop species with low number of genes from ND4.fna
+Drop species with low number of genes from ND4L.fna
+Drop species with low number of genes from ND5.fna
+Drop species with low number of genes from ND6.fna
+
+Clean alignments was written to data/interim/alignments_nematoda_clean/
+(env_birds) kpotoh:~/birds$ bash scripts/1.4.trim_alignments.sh data/interim/alignments_nematoda_clean/*
+Output directory data/interim/trimed_aln_nematoda
+Start parallel computing...
+Done

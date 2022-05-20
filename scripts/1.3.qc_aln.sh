@@ -15,8 +15,9 @@ USED_SP=logs/used_sp_in_aln_$LABEL.log
 
 LOCAL_TMPDIR=/tmp/alignments_${LABEL}
 OUTDIR=data/interim/alignments_${LABEL}_clean
-mkdir -p $LOCAL_TMPDIR $OUTDIR
 
+rm -fr $LOCAL_TMPDIR $OUTDIR
+mkdir -p $LOCAL_TMPDIR $OUTDIR
 
 # Drop pseudogenes and trash
 parallel echo Drop pseudogenes from {/} ';' python scripts/qc_alignment.py {} $LOCAL_TMPDIR/{/} --gencode $GENCODE ::: $@  # --dry-run
@@ -26,7 +27,6 @@ do
     echo -n -e "$name\t"
     cat $LOCAL_TMPDIR/* | grep -c $name
 done > $USED_SP
-
 
 # Find species with low number of seqs
 drop_sp=""
@@ -38,7 +38,6 @@ drop_sp=${drop_sp%"|"}
 
 if [[ $LABEL -eq "birds" ]]; then drop_sp+="|Agapornis_pullarius"; fi
 echo -e "Species with low number of genes:\n$drop_sp\n"
-
 
 # Drop species with low number of genes
 for file in $LOCAL_TMPDIR/*
