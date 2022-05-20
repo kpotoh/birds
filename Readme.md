@@ -47,41 +47,31 @@ bash scripts/align_genes.sh data/interim/gene_seqs/*  # need to modify to change
 cat data/interim/alignments_birds/*.fna | egrep -o "\-*" | sort | uniq -c | awk '{print $1 "\t" length($2) "\t" $2 "\t" length($2)%3}' | tee logs/gaps_birds.log
 ```
 
-1.3 Drop seqs that contains frameshifts and stopcodons in the middle of the genes
+1.3 Drop seqs that contains frameshifts and stopcodons in the middle of the genes. Drop species that has less than 10 genes after QC. Also drop bird *Agapornis_pullarius* because it is full dublicate of another *Agapornis* according to sequences
 
 ```bash
-bash scripts/qc_aln.sh data/interim/alignments_birds/*.fna  # need to modify gencode before run
+# need to modify label before run
+bash scripts/1.3.qc_aln.sh data/interim/alignments_birds/*.fna
+bash scripts/1.3.qc_aln.sh data/interim/alignments_devilworm/*.fna
 ```
-
-**TODO move step 1.5-6 here!!!!!!!!**
 
 1.4 Trim alignments
 
 ```bash
 bash scripts/trim_alignment.sh data/interim/alignments_birds_clean/*.fna
+bash scripts/trim_alignment.sh data/interim/alignments_nematoda_clean/*.fna
 ```
 
-1.4 *Repeat step 1.2* if needed
-
-1.5* Check occurence of species in alignment
+1.4\* Repeat step 1.2\* if needed
 
 ```bash
-for name in `cat data/interim/species.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_birds/* | grep -c $name; done > logs/used_sp_in_aln.log
-for name in `cat data/interim/species_nematoda.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_devilworm/* | grep -c $name; done > logs/used_sp_in_aln_devilworm.log
+cat data/interim/trimed_aln_nematoda/* | egrep -o "\-*" | sort | uniq -c | awk '{print $1 "\t" length($2) "\t" $2 "\t" length($2)%3}'
 ```
 
-1.5 Drop *Mergus_squamatus* because it has only 8 genes after filtration
+1.5 Check lost number of genes in species
 
 ```bash
-egrep -v '1[012]' logs/used_sp_in_aln_devilworm.log
-bash scripts/qc_aln2.sh  # custom file, change in new run
-```bash
-Also drop *Agapornis_pullarius* because it is full dublicate of another *Agapornis* according to sequences
-
-1.6* Repeat step 1.5*
-
-```bash
-for name in `cat data/interim/species.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_birds_clean/* | grep -c $name; done | cut -f 2 | sort | uniq
+for name in `cat data/interim/species_label.txt`; do echo -n -e "$name\t"; cat data/interim/trimed_aln_label/* | grep -c $name; done | cut -f 2 | sort | uniq
 ```
 
 ### 2 Prepare constraint tree

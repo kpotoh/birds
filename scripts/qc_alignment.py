@@ -9,7 +9,7 @@ from utils import read_start_stop_codons
 
 CUTOFF = 0.1
 FS_CHAR = "!"
-PATH_TO_GENCODE2 = "./data/external/genetic_code2.txt"
+# PATH_TO_GENCODE2 = "./data/external/genetic_code2.txt"
 
 DESCR = f"""
 Drop genes with frameshifts ('!') from fasta.
@@ -41,9 +41,7 @@ def is_contains_stopcodons(seq: str, stopcodons: set) -> bool:
 @click.argument("alignment", required=True, type=click.Path(exists=True))  # path to fasta file, containing aligned gene sequences
 @click.argument("out-fasta", required=True, type=click.Path(exists=False, writable=True))  # path to output fasta
 @click.option(
-    "-g", "--gencode", required=False, type=click.Path(exists=True), 
-    default=PATH_TO_GENCODE2, show_default=True, help="path to genetic code file"
-)
+    "-g", "--gencode", required=False, default=2, show_default=True, help="genetic code")
 @click.option(
     "-c", "--cutoff", required=False, default=CUTOFF, show_default=True, 
     help="share of genome length at the end of gene that will not be considered while dropping"
