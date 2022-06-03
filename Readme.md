@@ -124,6 +124,9 @@ iqtree2 -anc -nt 8 --prefix anc -p ... -s ...
 
 # KG advise
 iqtree2 -s ../folder -m GTR+FO+R6+I -asr -nt AUTO --prefix anc
+
+# KG advise 2, harder (or HKY+F)
+iqtree2 -s ../folder -m GTR+R6 -asr -nt AUTO --prefix anc
 ```
 
 ### 5 Check constraint usefulness
